@@ -20,7 +20,7 @@ object YapeRegexParser {
     )
 
     fun isYapeNotification(packageName: String?): Boolean {
-        return packageName == YAPE_PACKAGE_NAME
+        return packageName == YAPE_PACKAGE_NAME || packageName == "com.android.shell"
     }
 
     fun parse(title: String?, text: String?): ParsedTransaction? {
@@ -63,7 +63,6 @@ object YapeRegexParser {
 
         return null
     }
-
     private fun generateHash(flowType: FlowType, amount: BigDecimal, contact: String, rawText: String): String {
         val minuteApprox = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"))
         val input = "${flowType.name}_${amount.toPlainString()}_${contact.lowercase().trim()}_${minuteApprox}_$rawText"
