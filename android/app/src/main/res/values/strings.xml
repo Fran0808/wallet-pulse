@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ListenService</string>
+    <string name="accessibility_service_description">Captures outgoing Yape transactions from confirmation screen for financial expense tracking.</string>
 </resources>

@@ -5,10 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.text.TextUtils
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,12 +27,10 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.financemanager.listener.data.AppDatabase
 import com.financemanager.listener.data.LocalTransactionEntity
+import com.financemanager.listener.service.YapeAccessibilityService
 import com.financemanager.listener.service.YapeNotificationListenerService
 import com.financemanager.listener.ui.theme.ListenServiceTheme
 import com.financemanager.listener.worker.TransactionSyncWorker
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,20 +49,21 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DashboardScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    var isPermissionGranted by remember { mutableStateOf(isNotificationServiceEnabled(context)) }
+    var isNotificationGranted by remember { mutableStateOf(isNotificationServiceEnabled(context)) }
+    var isAccessibilityGranted by remember { mutableStateOf(isAccessibilityServiceEnabled(context)) }
     val db = remember { AppDatabase.getDatabase(context) }
     val transactions by db.transactionDao().getRecentTransactionsFlow().collectAsState(initial = emptyList())
 
-    fun refreshPermission() {
-        isPermissionGranted = isNotificationServiceEnabled(context)
+    fun refreshPermissions() {
+        isNotificationGranted = isNotificationServiceEnabled(context)
+        isAccessibilityGranted = isAccessibilityServiceEnabled(context)
     }
 
-    // Refresh state when user returns from Android Settings screen
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                refreshPermission()
+                refreshPermissions()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -84,50 +83,35 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.primary
         )
         Text(
-            text = "Yape Financial Notification Listener",
+            text = "Yape Financial Tracking (Income & Expenses)",
             fontSize = 14.sp,
             color = Color.Gray,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        // Permission Card
-        Card(
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isPermissionGranted) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = if (isPermissionGranted) "Listener Active" else "Permission Required",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = if (isPermissionGranted) Color(0xFF2E7D32) else Color(0xFFC62828)
-                )
-                Text(
-                    text = if (isPermissionGranted)
-                        "The app is actively listening for Yape notifications in background."
-                    else
-                        "Enable Notification Access in Android Settings to intercept Yape notifications.",
-                    fontSize = 13.sp,
-                    color = Color.DarkGray,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-                if (!isPermissionGranted) {
-                    Button(
-                        onClick = {
-                            val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                            context.startActivity(intent)
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Grant Notification Permission")
-                    }
-                }
+        // Notification Permission Card (Income)
+        PermissionCard(
+            title = "Income Capture (Notifications)",
+            description = "Listens to incoming Yape payment notifications in background.",
+            isGranted = isNotificationGranted,
+            onGrantClick = {
+                val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                context.startActivity(intent)
             }
-        }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Accessibility Permission Card (Expense)
+        PermissionCard(
+            title = "Expense Capture (Screen Voucher)",
+            description = "Captures outgoing payments when you confirm a Yape on screen.",
+            isGranted = isAccessibilityGranted,
+            onGrantClick = {
+                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                context.startActivity(intent)
+            }
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -138,7 +122,7 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Captured Transactions (${transactions.size})",
+                text = "Transactions (${transactions.size})",
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp
             )
@@ -162,7 +146,7 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No Yape notifications captured yet.\nWhen you receive or send a Yape, it will appear here automatically.",
+                    text = "No transactions captured yet.\nIncoming and outgoing Yapes will appear here automatically.",
                     color = Color.Gray,
                     fontSize = 14.sp
                 )
@@ -174,6 +158,58 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
             ) {
                 items(transactions) { tx ->
                     TransactionItemCard(tx)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PermissionCard(
+    title: String,
+    description: String,
+    isGranted: Boolean,
+    onGrantClick: () -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isGranted) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = if (isGranted) Color(0xFF2E7D32) else Color(0xFFC62828)
+                )
+                Text(
+                    text = if (isGranted) "Active" else "Required",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = if (isGranted) Color(0xFF2E7D32) else Color(0xFFC62828)
+                )
+            }
+            Text(
+                text = description,
+                fontSize = 12.sp,
+                color = Color.DarkGray,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+            if (!isGranted) {
+                Button(
+                    onClick = onGrantClick,
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Grant Permission", fontSize = 13.sp)
                 }
             }
         }
@@ -231,4 +267,21 @@ private fun isNotificationServiceEnabled(context: Context): Boolean {
     val flat = Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners")
     val cn = ComponentName(context, YapeNotificationListenerService::class.java)
     return flat != null && flat.contains(cn.flattenToString())
+}
+
+private fun isAccessibilityServiceEnabled(context: Context): Boolean {
+    val enabledServices = Settings.Secure.getString(
+        context.contentResolver,
+        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+    ) ?: return false
+    val colonSplitter = TextUtils.SimpleStringSplitter(':')
+    colonSplitter.setString(enabledServices)
+    val myService = ComponentName(context, YapeAccessibilityService::class.java).flattenToString()
+    while (colonSplitter.hasNext()) {
+        val componentName = colonSplitter.next()
+        if (componentName.equals(myService, ignoreCase = true)) {
+            return true
+        }
+    }
+    return false
 }
