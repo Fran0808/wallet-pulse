@@ -7,10 +7,12 @@ import com.store.api.model.entity.Transaction;
 import com.store.api.model.enums.FlowType;
 import com.store.api.repository.RawNotificationRepository;
 import com.store.api.repository.TransactionRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +30,6 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponse processAndSave(TransactionSyncRequest request) {
-        // Save raw notification audit log
         if (request.getRawNotificationText() != null && !request.getRawNotificationText().isBlank()) {
             RawNotificationLog rawLog = RawNotificationLog.builder()
                     .rawText(request.getRawNotificationText())
@@ -38,7 +39,6 @@ public class TransactionService {
             rawNotificationRepository.save(rawLog);
         }
 
-        // Deduplication logic: If transaction hash already exists, skip duplicate safely
         if (transactionRepository.existsByTransactionHash(request.getTransactionHash())) {
             log.warn("Transaction with hash [{}] already exists. Skipping duplicate.", request.getTransactionHash());
             Transaction existing = transactionRepository.findByTransactionHash(request.getTransactionHash()).orElseThrow();
@@ -70,8 +70,26 @@ public class TransactionService {
 
     @Transactional(readOnly = true)
     public Page<TransactionResponse> getTransactions(LocalDateTime startDate, LocalDateTime endDate, FlowType flowType, String search, Pageable pageable) {
-        return transactionRepository.findWithFilters(startDate, endDate, flowType, search, pageable)
-                .map(this::mapToResponse);
+        Specification<Transaction> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("transactionDate"), startDate));
+            }
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("transactionDate"), endDate));
+            }
+            if (flowType != null) {
+                predicates.add(cb.equal(root.get("flowType"), flowType));
+            }
+            if (search != null && !search.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("contactName")), "%" + search.toLowerCase().trim() + "%"));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return transactionRepository.findAll(spec, pageable).map(this::mapToResponse);
     }
 
     private TransactionResponse mapToResponse(Transaction t) {
