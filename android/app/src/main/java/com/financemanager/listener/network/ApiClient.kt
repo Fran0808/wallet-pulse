@@ -1,5 +1,6 @@
 package com.financemanager.listener.network
 
+import com.financemanager.listener.BuildConfig
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -12,7 +13,7 @@ interface ApiService {
 }
 
 object ApiClient {
-    private const val BASE_URL = "http://127.0.0.1:8080/"
+    private val BASE_URL: String = if (BuildConfig.BASE_URL.endsWith("/")) BuildConfig.BASE_URL else "${BuildConfig.BASE_URL}/"
 
     val service: ApiService by lazy {
         Retrofit.Builder()
