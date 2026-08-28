@@ -51,19 +51,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DashboardScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     var isPermissionGranted by remember { mutableStateOf(isNotificationServiceEnabled(context)) }
-    var transactions by remember { mutableStateOf<List<LocalTransactionEntity>>(emptyList()) }
+    val db = remember { AppDatabase.getDatabase(context) }
+    val transactions by db.transactionDao().getRecentTransactionsFlow().collectAsState(initial = emptyList())
 
-    fun refreshData() {
+    fun refreshPermission() {
         isPermissionGranted = isNotificationServiceEnabled(context)
-        coroutineScope.launch(Dispatchers.IO) {
-            val db = AppDatabase.getDatabase(context)
-            val list = db.transactionDao().getRecentTransactions()
-            withContext(Dispatchers.Main) {
-                transactions = list
-            }
-        }
     }
 
     // Refresh state when user returns from Android Settings screen
@@ -71,7 +64,7 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                refreshData()
+                refreshPermission()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -152,7 +145,6 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
             OutlinedButton(
                 onClick = {
                     TransactionSyncWorker.enqueue(context)
-                    refreshData()
                 }
             ) {
                 Text("Sync Now")

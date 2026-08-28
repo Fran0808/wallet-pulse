@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TransactionDao {
@@ -19,4 +20,7 @@ interface TransactionDao {
 
     @Query("SELECT * FROM local_transactions ORDER BY createdAt DESC LIMIT 50")
     fun getRecentTransactions(): List<LocalTransactionEntity>
+
+    @Query("SELECT * FROM local_transactions ORDER BY createdAt DESC LIMIT 50")
+    fun getRecentTransactionsFlow(): Flow<List<LocalTransactionEntity>>
 }
