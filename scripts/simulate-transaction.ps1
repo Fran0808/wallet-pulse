@@ -1,6 +1,6 @@
 param (
     [decimal]$Amount = 25.00,
-    [string]$Contact = "Juan Perez",
+    [string]$Contact = "Martha Qui*",
     [ValidateSet("Income", "Expense")]
     [string]$Type = "Income"
 )
@@ -13,13 +13,17 @@ if (-not (Test-Path $adbPath)) {
     exit 1
 }
 
+# Ensure ADB reverse port tunnel is active for backend sync
+& $adbPath reverse tcp:8080 tcp:8080 | Out-Null
+
 # Format amount with 2 decimal places
 $formattedAmount = "{0:N2}" -f $Amount
 
-# Construct notification parameters according to flow type
+# Construct notification parameters according to real Yape format
 if ($Type -eq "Income") {
-    $title = "Te yapearon"
-    $text = "$Contact te envio S/ $formattedAmount a tu Yape"
+    $title = "Confirmación de Pago"
+    $secCode = Get-Random -Minimum 100 -Maximum 999
+    $text = "$Contact te envió un pago por S/ $formattedAmount. El cód. de seguridad es: $secCode"
     $tag = "yape_income_$(Get-Random)"
 } else {
     $title = "Yapeaste"
@@ -27,7 +31,7 @@ if ($Type -eq "Income") {
     $tag = "yape_expense_$(Get-Random)"
 }
 
-Write-Host "Simulating $Type notification:" -ForegroundColor Cyan
+Write-Host "Simulating $Type notification (Real Yape Format):" -ForegroundColor Cyan
 Write-Host "  Title  : $title"
 Write-Host "  Text   : $text"
 Write-Host "  Amount : S/ $formattedAmount"
@@ -38,5 +42,6 @@ Write-Host "  Contact: $Contact"
 
 Write-Host "Notification dispatched successfully." -ForegroundColor Green
 
-#.\scripts\simulate-transaction.ps1 -Amount 75.50 -Contact "Carlos Mendoza" -Type Income
-#.\scripts\simulate-transaction.ps1 -Amount 20.00 -Contact "Farmacia Universal" -Type Expense
+# Usage Examples:
+# .\scripts\simulate-transaction.ps1 -Amount 75.50 -Contact "Carlos Mendoza" -Type Income
+# .\scripts\simulate-transaction.ps1 -Amount 20.00 -Contact "Farmacia Universal" -Type Expense
