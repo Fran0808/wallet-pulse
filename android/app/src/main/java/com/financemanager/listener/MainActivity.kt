@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
-import android.text.TextUtils
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -27,7 +26,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.financemanager.listener.data.AppDatabase
 import com.financemanager.listener.data.LocalTransactionEntity
-import com.financemanager.listener.service.YapeAccessibilityService
 import com.financemanager.listener.service.YapeNotificationListenerService
 import com.financemanager.listener.ui.theme.ListenServiceTheme
 import com.financemanager.listener.worker.TransactionSyncWorker
@@ -50,13 +48,11 @@ class MainActivity : ComponentActivity() {
 fun DashboardScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var isNotificationGranted by remember { mutableStateOf(isNotificationServiceEnabled(context)) }
-    var isAccessibilityGranted by remember { mutableStateOf(isAccessibilityServiceEnabled(context)) }
     val db = remember { AppDatabase.getDatabase(context) }
     val transactions by db.transactionDao().getRecentTransactionsFlow().collectAsState(initial = emptyList())
 
     fun refreshPermissions() {
         isNotificationGranted = isNotificationServiceEnabled(context)
-        isAccessibilityGranted = isAccessibilityServiceEnabled(context)
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -83,32 +79,19 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.primary
         )
         Text(
-            text = "Yape Financial Tracking (Income & Expenses)",
+            text = "Yape Financial Notification Listener",
             fontSize = 14.sp,
             color = Color.Gray,
             modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        // Notification Permission Card (Income)
+        // Notification Permission Card
         PermissionCard(
-            title = "Income Capture (Notifications)",
-            description = "Listens to incoming Yape payment notifications in background.",
+            title = "Notification Listener",
+            description = "Listens to incoming Yape payment notifications in background with 0% risk.",
             isGranted = isNotificationGranted,
             onGrantClick = {
                 val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                context.startActivity(intent)
-            }
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Accessibility Permission Card (Expense)
-        PermissionCard(
-            title = "Expense Capture (Screen Voucher)",
-            description = "Captures outgoing payments when you confirm a Yape on screen.",
-            isGranted = isAccessibilityGranted,
-            onGrantClick = {
-                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                 context.startActivity(intent)
             }
         )
@@ -122,7 +105,7 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Transactions (${transactions.size})",
+                text = "Captured Transactions (${transactions.size})",
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp
             )
@@ -146,7 +129,7 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No transactions captured yet.\nIncoming and outgoing Yapes will appear here automatically.",
+                    text = "No transactions captured yet.\nWhen you receive a Yape, it will appear here automatically.",
                     color = Color.Gray,
                     fontSize = 14.sp
                 )
@@ -267,21 +250,4 @@ private fun isNotificationServiceEnabled(context: Context): Boolean {
     val flat = Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners")
     val cn = ComponentName(context, YapeNotificationListenerService::class.java)
     return flat != null && flat.contains(cn.flattenToString())
-}
-
-private fun isAccessibilityServiceEnabled(context: Context): Boolean {
-    val enabledServices = Settings.Secure.getString(
-        context.contentResolver,
-        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-    ) ?: return false
-    val colonSplitter = TextUtils.SimpleStringSplitter(':')
-    colonSplitter.setString(enabledServices)
-    val myService = ComponentName(context, YapeAccessibilityService::class.java).flattenToString()
-    while (colonSplitter.hasNext()) {
-        val componentName = colonSplitter.next()
-        if (componentName.equals(myService, ignoreCase = true)) {
-            return true
-        }
-    }
-    return false
 }
