@@ -23,7 +23,7 @@ try {
 # 2. Ejecutar Sincronizacion
 Write-Host "`n2. SINCRONIZANDO CORREOS Y GUARDANDO EN POSTGRESQL..." -ForegroundColor Yellow
 try {
-    $syncResult = Invoke-RestMethod -Uri "$BaseUrl/api/v1/emails/sync" -Method Post -TimeoutSec 30
+    $syncResult = Invoke-RestMethod -Uri "$BaseUrl/api/v1/emails/sync" -Method Post -TimeoutSec 120
     Write-Host "   - Escaneados:            $($syncResult.scannedCount)"
     Write-Host "   - Procesados en lote:    $($syncResult.processedInBatch)"
     Write-Host "   - Guardados con exito:   $($syncResult.savedCount)" -ForegroundColor Green

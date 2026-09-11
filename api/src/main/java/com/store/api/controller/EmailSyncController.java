@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/emails")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class EmailSyncController {
 
     private final EmailIngestionService emailIngestionService;
