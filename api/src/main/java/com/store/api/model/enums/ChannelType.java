@@ -1,0 +1,14 @@
+package com.store.api.model.enums;
+
+public enum ChannelType {
+    YAPE,
+    PLIN,
+    TARJETA_CREDITO_BCP,
+    TARJETA_DEBITO_BCP,
+    BCP_TRANSFERENCIA,
+    TARJETA_CREDITO_INTERBANK,
+    TARJETA_DEBITO_INTERBANK,
+    TARJETA_CREDITO_BBVA,
+    TARJETA_DEBITO_BBVA,
+    OTRO
+}
