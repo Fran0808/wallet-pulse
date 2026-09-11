@@ -30,10 +30,14 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponse processAndSave(TransactionSyncRequest request) {
+        String channel = (request.getChannel() != null && !request.getChannel().isBlank())
+                ? request.getChannel().trim()
+                : "UNKNOWN";
+
         if (request.getRawNotificationText() != null && !request.getRawNotificationText().isBlank()) {
             RawNotificationLog rawLog = RawNotificationLog.builder()
                     .rawText(request.getRawNotificationText())
-                    .sourcePackage("com.bcp.innovacxion.yapeapp")
+                    .sourcePackage(channel)
                     .isProcessed(true)
                     .build();
             rawNotificationRepository.save(rawLog);
@@ -49,13 +53,14 @@ public class TransactionService {
                 .amount(request.getAmount())
                 .flowType(request.getFlowType())
                 .contactName(request.getContactName().trim())
-                .channel(request.getChannel() != null ? request.getChannel() : "YAPE")
+                .channel(channel)
                 .transactionDate(request.getTransactionDate())
                 .transactionHash(request.getTransactionHash())
                 .build();
 
         Transaction saved = transactionRepository.save(transaction);
-        log.info("Transaction saved successfully: ID={}, Amount={}, FlowType={}", saved.getId(), saved.getAmount(), saved.getFlowType());
+        log.info("Transaction saved successfully: ID={}, Amount={}, FlowType={}, Channel={}",
+                saved.getId(), saved.getAmount(), saved.getFlowType(), saved.getChannel());
         return mapToResponse(saved);
     }
 

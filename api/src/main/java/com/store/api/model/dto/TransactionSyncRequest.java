@@ -22,7 +22,7 @@ public class TransactionSyncRequest {
     @NotBlank(message = "Contact name is required")
     private String contactName;
 
-    private String channel = "YAPE";
+    private String channel;
 
     @NotNull(message = "Transaction date is required")
     private LocalDateTime transactionDate;
