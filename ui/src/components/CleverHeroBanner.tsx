@@ -28,7 +28,7 @@ export const CleverHeroBanner: React.FC<CleverHeroBannerProps> = ({
 
   const isCurrentMonth = selectedYear === currentYear && selectedMonth === currentMonth;
 
-  if (loading || !analytics) {
+  if (!analytics) {
     return (
       <div className="rounded-3xl bg-blue-900/10 border border-blue-200/60 p-8 animate-pulse">
         <div className="h-4 w-32 bg-blue-200 rounded mb-4" />
@@ -42,7 +42,11 @@ export const CleverHeroBanner: React.FC<CleverHeroBannerProps> = ({
   }
 
   return (
-    <div className="rounded-3xl bg-gradient-to-br from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] text-white shadow-xl shadow-blue-950/15 p-6 sm:p-8 relative overflow-hidden">
+    <div
+      className={`rounded-3xl bg-gradient-to-br from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] text-white shadow-xl shadow-blue-950/15 p-6 sm:p-8 relative overflow-hidden transition-opacity duration-200 ${
+        loading ? 'opacity-75' : 'opacity-100'
+      }`}
+    >
       {/* Decorative ambient glows */}
       <div className="absolute -right-16 -top-16 w-80 h-80 bg-sky-400/20 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -left-16 -bottom-16 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />

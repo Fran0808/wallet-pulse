@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { CreditCard, Smartphone, ShieldCheck, PieChart } from 'lucide-react';
 import type { ChannelBreakdown } from '../types';
 import { formatCurrency, getChannelLabel } from '../utils/formatters';
@@ -38,8 +38,8 @@ export const AccountsChannelsCard: React.FC<AccountsChannelsCardProps> = ({
         </div>
 
         {/* Channel Breakdown */}
-        <div className="mt-3 divide-y divide-slate-100">
-          {loading ? (
+        <div className={`mt-3 divide-y divide-slate-100 transition-opacity duration-200 ${loading ? 'opacity-70' : 'opacity-100'}`}>
+          {loading && (!channels || channels.length === 0) ? (
             [...Array(2)].map((_, idx) => (
               <div key={idx} className="py-3 flex items-center justify-between animate-pulse">
                 <div className="h-4 w-32 bg-slate-200 rounded" />

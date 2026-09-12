@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Store, ShoppingBag, ChevronRight } from 'lucide-react';
 import type { TopMerchant } from '../types';
 import { formatCurrency } from '../utils/formatters';
@@ -26,8 +26,8 @@ export const TopMerchantsCard: React.FC<TopMerchantsCardProps> = ({ merchants, l
         </div>
 
         {/* Merchant list */}
-        <div className="mt-3 divide-y divide-slate-100">
-          {loading ? (
+        <div className={`mt-3 divide-y divide-slate-100 transition-opacity duration-200 ${loading ? 'opacity-70' : 'opacity-100'}`}>
+          {loading && (!merchants || merchants.length === 0) ? (
             [...Array(3)].map((_, idx) => (
               <div key={idx} className="py-3 flex items-center justify-between animate-pulse">
                 <div className="flex items-center gap-2.5">
@@ -42,7 +42,7 @@ export const TopMerchantsCard: React.FC<TopMerchantsCardProps> = ({ merchants, l
             ))
           ) : !merchants || merchants.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-400">
-              Sin consumos suficientes para calcular comercios frecuentes.
+              Sin consumos en este período seleccionado.
             </div>
           ) : (
             merchants.map((m, idx) => (
