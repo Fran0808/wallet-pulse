@@ -7,6 +7,8 @@ import com.store.api.model.dto.email.EmailMessageDto;
 import com.store.api.model.dto.email.EmailSyncResponse;
 import com.store.api.model.dto.email.ParsedEmailTransaction;
 import com.store.api.service.TransactionService;
+import com.store.api.service.auth.GoogleOAuthService;
+import com.store.api.service.email.client.GmailApiClient;
 import com.store.api.service.email.client.ImapEmailClient;
 import com.store.api.service.email.parser.BankEmailParserDispatcher;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,8 @@ import java.util.Optional;
 @Slf4j
 public class EmailIngestionService {
 
+    private final GoogleOAuthService googleOAuthService;
+    private final GmailApiClient gmailApiClient;
     private final ImapEmailClient imapEmailClient;
     private final BankEmailParserDispatcher parserDispatcher;
     private final TransactionService transactionService;
@@ -34,11 +38,27 @@ public class EmailIngestionService {
     private int batchSize;
 
     public EmailConnectionTestResponse testConnection() {
+        Optional<String> googleToken = googleOAuthService.getValidAccessToken();
+        if (googleToken.isPresent()) {
+            return EmailConnectionTestResponse.builder()
+                    .status("OK")
+                    .message("Conexión activa y autorizada con Google Gmail API (OAuth2)")
+                    .build();
+        }
         return imapEmailClient.testConnection();
     }
 
     public EmailSyncResponse syncEmails() {
-        List<EmailMessageDto> messages = imapEmailClient.fetchFinancialEmails(batchSize);
+        List<EmailMessageDto> messages;
+        Optional<String> googleToken = googleOAuthService.getValidAccessToken();
+
+        if (googleToken.isPresent()) {
+            log.info("Synchronizing emails using Google Gmail REST API (OAuth2)...");
+            messages = gmailApiClient.fetchFinancialEmails(googleToken.get(), batchSize);
+        } else {
+            log.info("Synchronizing emails using IMAP fallback client...");
+            messages = imapEmailClient.fetchFinancialEmails(batchSize);
+        }
         int scannedCount = messages.size();
         int savedCount = 0;
         List<TransactionResponse> savedTransactions = new ArrayList<>();
