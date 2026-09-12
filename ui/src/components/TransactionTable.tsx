@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Receipt,
+  Eye,
 } from 'lucide-react';
 import type { Transaction, PageResponse } from '../types';
 import { formatCurrency, formatDate, getChannelLabel } from '../utils/formatters';
@@ -16,12 +17,14 @@ interface TransactionTableProps {
   pageData: PageResponse<Transaction> | null;
   loading: boolean;
   onPageChange: (newPage: number) => void;
+  onSelectTransaction: (tx: Transaction) => void;
 }
 
 export const TransactionTable: React.FC<TransactionTableProps> = ({
   pageData,
   loading,
   onPageChange,
+  onSelectTransaction,
 }) => {
   const getChannelBadge = (channel: string) => {
     switch (channel) {
@@ -69,7 +72,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
         <div>
           <h3 className="text-base font-bold text-slate-900">Registro de Transacciones</h3>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Historial cronológico de compras, pagos y abonos bancarios
+            Haz clic en cualquier fila para inspeccionar el hash de auditoría y los detalles
           </p>
         </div>
         {pageData && (
@@ -89,6 +92,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
               <th scope="col" className="py-3.5 px-6">Canal Bancario</th>
               <th scope="col" className="py-3.5 px-6">Fecha & Hora</th>
               <th scope="col" className="py-3.5 px-6 text-right">Importe</th>
+              <th scope="col" className="py-3.5 px-4 text-center">Acción</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm">
@@ -108,11 +112,14 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                   <td className="py-4 px-6 text-right">
                     <div className="h-5 w-24 bg-slate-200 rounded ml-auto" />
                   </td>
+                  <td className="py-4 px-4 text-center">
+                    <div className="h-6 w-6 bg-slate-200 rounded-full mx-auto" />
+                  </td>
                 </tr>
               ))
             ) : !pageData || pageData.content.length === 0 ? (
               <tr>
-                <td colSpan={4} className="py-12 px-6 text-center">
+                <td colSpan={5} className="py-12 px-6 text-center">
                   <div className="inline-flex p-3 rounded-full bg-slate-100 text-slate-400 mb-3">
                     <Receipt className="w-6 h-6" />
                   </div>
@@ -128,7 +135,8 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                 return (
                   <tr
                     key={tx.id}
-                    className="hover:bg-slate-50/80 transition-colors group"
+                    onClick={() => onSelectTransaction(tx)}
+                    className="hover:bg-indigo-50/40 cursor-pointer transition-colors group"
                   >
                     {/* Contact / Merchant */}
                     <td className="py-4 px-6">
@@ -176,6 +184,13 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                       >
                         {isIncome ? '+ ' : '- '}
                         {formatCurrency(tx.amount)}
+                      </span>
+                    </td>
+
+                    {/* Action Eye */}
+                    <td className="py-4 px-4 text-center whitespace-nowrap">
+                      <span className="p-1.5 rounded-lg text-slate-400 group-hover:text-indigo-600 group-hover:bg-indigo-100/60 inline-flex transition-colors">
+                        <Eye className="w-4 h-4" />
                       </span>
                     </td>
                   </tr>
