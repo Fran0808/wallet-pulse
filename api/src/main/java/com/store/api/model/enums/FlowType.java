@@ -2,5 +2,6 @@ package com.store.api.model.enums;
 
 public enum FlowType {
     INCOME,
-    EXPENSE
+    EXPENSE,
+    INTERNAL_TRANSFER
 }

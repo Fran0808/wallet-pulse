@@ -19,4 +19,9 @@ public class AnalyticsController {
     public ResponseEntity<FinancialSummaryResponse> getSummary() {
         return ResponseEntity.ok(analyticsService.getSummary());
     }
+
+    @GetMapping("/period")
+    public ResponseEntity<com.store.api.model.dto.PeriodAnalyticsResponse> getPeriodAnalytics() {
+        return ResponseEntity.ok(analyticsService.getPeriodAnalytics());
+    }
 }

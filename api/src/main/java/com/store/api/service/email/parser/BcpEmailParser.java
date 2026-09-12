@@ -119,9 +119,13 @@ public class BcpEmailParser implements BankEmailParser {
             operationNumber = opMatcher.group(1);
         }
 
-        // 6. FlowType (Default is EXPENSE for cards/consumption, check if income)
+        // 6. FlowType (Default is EXPENSE for cards/consumption, check if internal transfer or income)
         FlowType flowType = FlowType.EXPENSE;
-        if (combined.toLowerCase().contains("te envió") || combined.toLowerCase().contains("te yapeó") || combined.toLowerCase().contains("abono")) {
+        String lowerCombined = combined.toLowerCase();
+
+        if (lowerCombined.contains("entre mis cuentas") || lowerCombined.contains("transferencia propia") || lowerCombined.contains("transferencia entre cuentas")) {
+            flowType = FlowType.INTERNAL_TRANSFER;
+        } else if (lowerCombined.contains("te envió") || lowerCombined.contains("te yapeó") || lowerCombined.contains("abono")) {
             flowType = FlowType.INCOME;
         }
 
