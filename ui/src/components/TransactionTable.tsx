@@ -5,6 +5,7 @@ import {
   Building2,
   ArrowUpRight,
   ArrowDownLeft,
+  ArrowLeftRight,
   ChevronLeft,
   ChevronRight,
   Receipt,
@@ -30,8 +31,8 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
     switch (channel) {
       case 'TARJETA_CREDITO_BCP':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80">
-            <CreditCard className="w-3.5 h-3.5 text-indigo-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/80">
+            <CreditCard className="w-3.5 h-3.5 text-blue-600" />
             <span>Crédito BCP</span>
           </span>
         );
@@ -132,11 +133,13 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
             ) : (
               pageData.content.map((tx) => {
                 const isIncome = tx.flowType === 'INCOME';
+                const isInternal = tx.flowType === 'INTERNAL_TRANSFER';
+
                 return (
                   <tr
                     key={tx.id}
                     onClick={() => onSelectTransaction(tx)}
-                    className="hover:bg-indigo-50/40 cursor-pointer transition-colors group"
+                    className="hover:bg-blue-50/40 cursor-pointer transition-colors group"
                   >
                     {/* Contact / Merchant */}
                     <td className="py-4 px-6">
@@ -145,21 +148,25 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                           className={`p-2 rounded-xl flex-shrink-0 ${
                             isIncome
                               ? 'bg-emerald-50 text-emerald-600'
+                              : isInternal
+                              ? 'bg-blue-50 text-blue-600'
                               : 'bg-rose-50 text-rose-600'
                           }`}
                         >
                           {isIncome ? (
                             <ArrowDownLeft className="w-4 h-4" />
+                          ) : isInternal ? (
+                            <ArrowLeftRight className="w-4 h-4" />
                           ) : (
                             <ArrowUpRight className="w-4 h-4" />
                           )}
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                          <p className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                             {tx.contactName || 'Consumo no especificado'}
                           </p>
                           <p className="text-[11px] font-mono text-slate-400">
-                            ID: #{tx.id}
+                            {isInternal ? 'Traspaso propio · Sin cargo a gasto' : `ID: #${tx.id}`}
                           </p>
                         </div>
                       </div>
@@ -179,17 +186,21 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                     <td className="py-4 px-6 text-right whitespace-nowrap">
                       <span
                         className={`font-extrabold font-num text-sm sm:text-base ${
-                          isIncome ? 'text-emerald-600' : 'text-slate-900'
+                          isIncome
+                            ? 'text-emerald-600'
+                            : isInternal
+                            ? 'text-slate-600'
+                            : 'text-slate-900'
                         }`}
                       >
-                        {isIncome ? '+ ' : '- '}
+                        {isIncome ? '+ ' : isInternal ? '↔ ' : '- '}
                         {formatCurrency(tx.amount)}
                       </span>
                     </td>
 
                     {/* Action Eye */}
                     <td className="py-4 px-4 text-center whitespace-nowrap">
-                      <span className="p-1.5 rounded-lg text-slate-400 group-hover:text-indigo-600 group-hover:bg-indigo-100/60 inline-flex transition-colors">
+                      <span className="p-1.5 rounded-lg text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-100/60 inline-flex transition-colors">
                         <Eye className="w-4 h-4" />
                       </span>
                     </td>

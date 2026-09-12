@@ -1,6 +1,8 @@
 ﻿import { useState } from 'react';
 import { HeaderPulse } from './components/HeaderPulse';
 import { CleverHeroBanner } from './components/CleverHeroBanner';
+import { TopMerchantsCard } from './components/TopMerchantsCard';
+import { AccountsChannelsCard } from './components/AccountsChannelsCard';
 import { TransactionTable } from './components/TransactionTable';
 import { TransactionFilters } from './components/TransactionFilters';
 import { TransactionDetailModal } from './components/TransactionDetailModal';
@@ -25,7 +27,7 @@ export function App() {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-emerald-500/20">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-500/20">
       {/* 1. Header Pulse */}
       <HeaderPulse
         isSyncing={isSyncing}
@@ -37,12 +39,25 @@ export function App() {
       {/* 2. Main Dashboard Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
-        {/* Hero Section: Clever-style Period Cashflow */}
+        {/* Hero Section: Period Cashflow in Deep Cobalt */}
         <section aria-labelledby="hero-heading">
           <h2 id="hero-heading" className="sr-only">
             Resumen Financiero del Período
           </h2>
           <CleverHeroBanner analytics={periodAnalytics} loading={loadingSummary} />
+        </section>
+
+        {/* 2 Columns Section: Top Merchants & Accounts/Channels Breakdown */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TopMerchantsCard
+            merchants={periodAnalytics?.topMerchants || []}
+            loading={loadingSummary}
+          />
+          <AccountsChannelsCard
+            channels={periodAnalytics?.channelBreakdown || []}
+            internalTransfersAmount={periodAnalytics?.internalTransfersAmount || 0}
+            loading={loadingSummary}
+          />
         </section>
 
         {/* Transactions Ledger with Dynamic Filters */}
@@ -58,7 +73,7 @@ export function App() {
             </div>
           </div>
 
-          {/* Dynamic Filters */}
+          {/* Dynamic Filters with Transferencias Propias */}
           <TransactionFilters
             search={filters.search || ''}
             flowType={filters.flowType || ''}

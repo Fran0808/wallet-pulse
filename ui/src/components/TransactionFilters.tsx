@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Search, X, TrendingDown, TrendingUp, Layers } from 'lucide-react';
+import { Search, X, TrendingDown, TrendingUp, Layers, ArrowLeftRight } from 'lucide-react';
 import type { FlowType } from '../types';
 
 interface TransactionFiltersProps {
@@ -35,7 +35,7 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Buscar por comercio, contacto o servicio..."
-          className="block w-full pl-10 pr-10 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+          className="block w-full pl-10 pr-10 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all"
         />
         {search && (
           <button
@@ -49,9 +49,9 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
         )}
       </div>
 
-      {/* 2. Flow Type Segmented Control */}
+      {/* 2. Flow Type Segmented Control with INTERNAL_TRANSFER */}
       <div className="flex items-center gap-2 flex-wrap">
-        <div className="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200/80">
+        <div className="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200/80 flex-wrap">
           <button
             type="button"
             onClick={() => onFlowTypeChange('')}
@@ -89,6 +89,19 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
           >
             <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
             <span>Ingresos</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onFlowTypeChange('INTERNAL_TRANSFER')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              flowType === 'INTERNAL_TRANSFER'
+                ? 'bg-white text-blue-600 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <ArrowLeftRight className="w-3.5 h-3.5 text-blue-600" />
+            <span>Transferencias</span>
           </button>
         </div>
 

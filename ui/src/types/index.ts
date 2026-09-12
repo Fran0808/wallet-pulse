@@ -33,6 +33,13 @@ export interface ChannelBreakdown {
   count: number;
 }
 
+export interface TopMerchant {
+  merchantName: string;
+  totalAmount: number;
+  transactionCount: number;
+  percentage: number;
+}
+
 export interface PeriodAnalytics {
   periodName: string;
   monthlyExpense: number;
@@ -46,6 +53,7 @@ export interface PeriodAnalytics {
   topChannelAmount: number;
   topChannelPercentage: number;
   channelBreakdown: ChannelBreakdown[];
+  topMerchants: TopMerchant[];
 }
 
 export interface PageResponse<T> {
