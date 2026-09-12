@@ -1,4 +1,4 @@
-﻿export type FlowType = 'INCOME' | 'EXPENSE' | 'INTERNAL_TRANSFER';
+export type FlowType = 'INCOME' | 'EXPENSE' | 'INTERNAL_TRANSFER';
 
 export type ChannelType =
   | 'TARJETA_CREDITO_BCP'
@@ -84,3 +84,9 @@ export interface EmailConnectionStatus {
   matchedBcpEmailsCount: number;
   message?: string;
 }
+
+export interface GoogleAuthStatus {
+  connected: boolean;
+  email: string | null;
+}
+

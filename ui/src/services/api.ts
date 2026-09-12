@@ -5,6 +5,7 @@ import type {
   PageResponse,
   EmailSyncResponse,
   EmailConnectionStatus,
+  GoogleAuthStatus,
   FlowType,
 } from '../types';
 
@@ -83,5 +84,25 @@ export const api = {
   async testEmailConnection(): Promise<EmailConnectionStatus> {
     const response = await fetch(`${BASE_URL}/emails/test-connection`);
     return handleResponse<EmailConnectionStatus>(response);
+  },
+
+  async getGoogleAuthUrl(): Promise<string> {
+    const response = await fetch(`${BASE_URL}/auth/google/url`);
+    const data = await handleResponse<{ authUrl: string }>(response);
+    return data.authUrl;
+  },
+
+  async getGoogleAuthStatus(): Promise<GoogleAuthStatus> {
+    const response = await fetch(`${BASE_URL}/auth/google/status`);
+    return handleResponse<GoogleAuthStatus>(response);
+  },
+
+  async disconnectGoogle(): Promise<void> {
+    const response = await fetch(`${BASE_URL}/auth/google/disconnect`, {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      throw new Error(`Error al desvincular Google: ${response.statusText}`);
+    }
   },
 };
