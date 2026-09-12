@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   CreditCard,
   Smartphone,
@@ -77,9 +77,16 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
           </p>
         </div>
         {pageData && (
-          <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full w-fit">
-            {pageData.totalElements} movimientos registrados
-          </span>
+          <div className="flex items-center gap-2">
+            {loading && (
+              <span className="text-xs text-blue-600 font-medium animate-pulse">
+                Buscando...
+              </span>
+            )}
+            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full w-fit">
+              {pageData.totalElements} movimientos registrados
+            </span>
+          </div>
         )}
       </div>
 
@@ -96,8 +103,12 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
               <th scope="col" className="py-3.5 px-4 text-center">Acción</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-sm">
-            {loading ? (
+          <tbody
+            className={`divide-y divide-slate-100 text-sm transition-opacity duration-150 ${
+              loading && pageData ? 'opacity-60 pointer-events-none' : 'opacity-100'
+            }`}
+          >
+            {loading && !pageData ? (
               [...Array(6)].map((_, idx) => (
                 <tr key={idx} className="animate-pulse">
                   <td className="py-4 px-6">

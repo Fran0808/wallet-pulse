@@ -1,4 +1,4 @@
-﻿import React from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Search, X, TrendingDown, TrendingUp, Layers, ArrowLeftRight } from 'lucide-react';
 import type { FlowType } from '../types';
 
@@ -17,11 +17,35 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
   onFlowTypeChange,
   onReset,
 }) => {
-  const hasActiveFilters = Boolean(search.trim() || flowType);
+  // Local state for immediate typing responsiveness
+  const [localSearch, setLocalSearch] = useState(search);
+
+  // Sync when search prop changes externally (e.g. onReset)
+  useEffect(() => {
+    setLocalSearch(search);
+  }, [search]);
+
+  // Debounce search query by 300ms to avoid flashing requests
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (localSearch !== search) {
+        onSearchChange(localSearch);
+      }
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [localSearch, search, onSearchChange]);
+
+  const hasActiveFilters = Boolean(localSearch.trim() || flowType);
+
+  const handleClear = () => {
+    setLocalSearch('');
+    onSearchChange('');
+  };
 
   return (
     <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      {/* 1. Search Input */}
+      {/* 1. Search Input with Debounce */}
       <div className="relative flex-1 max-w-md">
         <label htmlFor="search-input" className="sr-only">
           Buscar por comercio o contacto
@@ -32,15 +56,15 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
         <input
           id="search-input"
           type="text"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.target.value)}
           placeholder="Buscar por comercio, contacto o servicio..."
           className="block w-full pl-10 pr-10 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all"
         />
-        {search && (
+        {localSearch && (
           <button
             type="button"
-            onClick={() => onSearchChange('')}
+            onClick={handleClear}
             aria-label="Limpiar búsqueda"
             className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
           >
@@ -49,7 +73,7 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
         )}
       </div>
 
-      {/* 2. Flow Type Segmented Control with INTERNAL_TRANSFER */}
+      {/* 2. Flow Type Segmented Control */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200/80 flex-wrap">
           <button
@@ -109,7 +133,10 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
         {hasActiveFilters && (
           <button
             type="button"
-            onClick={onReset}
+            onClick={() => {
+              setLocalSearch('');
+              onReset();
+            }}
             className="text-xs text-slate-500 hover:text-slate-800 font-medium px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
           >
             Limpiar filtros
