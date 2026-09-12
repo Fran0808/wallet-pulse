@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 @layer base {
   :root {
@@ -8,10 +8,11 @@
     --border-bright: #cbd5e1;
     --text-primary: #0f172a;
     --text-muted: #64748b;
-    --accent-indigo: #4f46e5;
+    --accent-indigo: #1e3a8a;
+    --accent-cobalt: #2563eb;
+    --accent-cyan: #0284c7;
     --accent-emerald: #059669;
     --accent-rose: #e11d48;
-    --accent-sky: #0284c7;
     --accent-amber: #d97706;
   }
 
