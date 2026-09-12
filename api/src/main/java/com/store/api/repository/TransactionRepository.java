@@ -36,4 +36,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
             @Param("start") java.time.LocalDateTime start,
             @Param("end") java.time.LocalDateTime end
     );
+
+    @Query("SELECT t.contactName, COALESCE(SUM(t.amount), 0), COUNT(t) FROM Transaction t WHERE t.flowType = 'EXPENSE' AND t.transactionDate >= :start AND t.transactionDate <= :end GROUP BY t.contactName ORDER BY COUNT(t) DESC, SUM(t.amount) DESC LIMIT 5")
+    java.util.List<Object[]> findTopMerchants(
+            @Param("start") java.time.LocalDateTime start,
+            @Param("end") java.time.LocalDateTime end
+    );
 }

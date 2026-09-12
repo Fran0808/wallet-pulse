@@ -16,17 +16,17 @@ public class PeriodAnalyticsResponse {
     private BigDecimal internalTransfersAmount;
     private long totalMovements;
 
-
     private String lastExpenseMerchant;
     private BigDecimal lastExpenseAmount;
     private LocalDateTime lastExpenseDate;
-
 
     private String topChannel;
     private BigDecimal topChannelAmount;
     private double topChannelPercentage;
 
     private List<ChannelBreakdownDto> channelBreakdown;
+
+    private List<TopMerchantDto> topMerchants;
 
     @Data
     @Builder
@@ -35,5 +35,14 @@ public class PeriodAnalyticsResponse {
         private BigDecimal amount;
         private double percentage;
         private long count;
+    }
+
+    @Data
+    @Builder
+    public static class TopMerchantDto {
+        private String merchantName;
+        private BigDecimal totalAmount;
+        private long transactionCount;
+        private double percentage;
     }
 }

@@ -78,6 +78,26 @@ public class AnalyticsService {
             topChannelPercentage = first.getPercentage();
         }
 
+        java.util.List<Object[]> rawMerchants = transactionRepository.findTopMerchants(startOfMonth, endOfMonth);
+        java.util.List<com.store.api.model.dto.PeriodAnalyticsResponse.TopMerchantDto> topMerchantsList = new java.util.ArrayList<>();
+
+        for (Object[] row : rawMerchants) {
+            String merchantName = (String) row[0];
+            java.math.BigDecimal amount = (java.math.BigDecimal) row[1];
+            long count = ((Number) row[2]).longValue();
+
+            double percentage = monthlyExpense.compareTo(java.math.BigDecimal.ZERO) > 0
+                    ? amount.divide(monthlyExpense, 4, java.math.RoundingMode.HALF_UP).doubleValue() * 100
+                    : 0.0;
+
+            topMerchantsList.add(com.store.api.model.dto.PeriodAnalyticsResponse.TopMerchantDto.builder()
+                    .merchantName(merchantName)
+                    .totalAmount(amount)
+                    .transactionCount(count)
+                    .percentage(Math.round(percentage * 10.0) / 10.0)
+                    .build());
+        }
+
         return com.store.api.model.dto.PeriodAnalyticsResponse.builder()
                 .periodName(now.getMonth().name())
                 .monthlyExpense(monthlyExpense)
@@ -91,6 +111,7 @@ public class AnalyticsService {
                 .topChannelAmount(topChannelAmount)
                 .topChannelPercentage(topChannelPercentage)
                 .channelBreakdown(breakdownList)
+                .topMerchants(topMerchantsList)
                 .build();
     }
 }
