@@ -15,15 +15,12 @@ export function App() {
     transactionsPage,
     loadingSummary,
     loadingTransactions,
-    isSyncing,
-    syncResult,
     error,
     filters,
     selectedPeriod,
     setSelectedPeriod,
     handlePageChange,
     handleFilterChange,
-    triggerEmailSync,
   } = useFinance();
 
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -31,12 +28,7 @@ export function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-500/20">
       {/* 1. Header Pulse */}
-      <HeaderPulse
-        isSyncing={isSyncing}
-        onSync={triggerEmailSync}
-        syncResult={syncResult}
-        error={error}
-      />
+      <HeaderPulse error={error} />
 
       {/* 2. Main Dashboard Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">

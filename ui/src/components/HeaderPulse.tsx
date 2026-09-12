@@ -1,21 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { RefreshCw, MailCheck, AlertCircle, LogOut, CheckCircle2 } from 'lucide-react';
+import { LogOut, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { api } from '../services/api';
-import type { EmailSyncResponse, GoogleAuthStatus } from '../types';
+import type { GoogleAuthStatus } from '../types';
 
 interface HeaderPulseProps {
-  isSyncing: boolean;
-  onSync: () => void;
-  syncResult: EmailSyncResponse | null;
-  error: string | null;
+  error?: string | null;
 }
 
-export const HeaderPulse: React.FC<HeaderPulseProps> = ({
-  isSyncing,
-  onSync,
-  syncResult,
-  error,
-}) => {
+export const HeaderPulse: React.FC<HeaderPulseProps> = ({ error }) => {
   const [googleAuth, setGoogleAuth] = useState<GoogleAuthStatus | null>(null);
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
@@ -34,7 +26,6 @@ export const HeaderPulse: React.FC<HeaderPulseProps> = ({
       window.history.replaceState({}, '', window.location.pathname);
     }
 
-    // Load initial Google connection status
     loadGoogleStatus();
   }, []);
 
@@ -78,7 +69,7 @@ export const HeaderPulse: React.FC<HeaderPulseProps> = ({
   return (
     <header className="border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-30 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           
           {/* Brand and Live Indicator */}
           <div className="flex items-center gap-3">
@@ -98,13 +89,12 @@ export const HeaderPulse: React.FC<HeaderPulseProps> = ({
             </div>
           </div>
 
-          {/* Action Bar / Google Status & Sync Button */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            {/* Google OAuth Status / Action */}
+          {/* Action Bar / Google Status (One-time connection) */}
+          <div className="flex items-center gap-2.5">
             {googleAuth?.connected ? (
               <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/90 rounded-xl px-3 py-2 text-xs text-slate-700 shadow-2xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-xs" />
-                <span className="font-semibold text-slate-800 truncate max-w-[160px] sm:max-w-[220px]">
+                <span className="font-semibold text-slate-800 truncate max-w-[180px] sm:max-w-[240px]">
                   {googleAuth.email}
                 </span>
                 <button
@@ -133,29 +123,6 @@ export const HeaderPulse: React.FC<HeaderPulseProps> = ({
                 <span>{isConnectingGoogle ? 'Conectando...' : 'Conectar Gmail'}</span>
               </button>
             )}
-
-            {syncResult && (
-              <div className="hidden lg:flex items-center gap-2 text-xs text-slate-700 bg-slate-100 px-3.5 py-2 rounded-xl border border-slate-200 shadow-xs">
-                <MailCheck className="w-4 h-4 text-emerald-600" />
-                <span>
-                  Última sincronización: <strong className="text-slate-900 font-bold">{syncResult.savedCount}</strong> nuevas
-                </span>
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={onSync}
-              disabled={isSyncing}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
-                isSyncing
-                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-                  : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98] shadow-blue-600/20 hover:shadow-blue-600/30'
-              }`}
-            >
-              <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-slate-400' : 'text-white'}`} />
-              <span>{isSyncing ? 'Descargando...' : 'Sincronizar Correos'}</span>
-            </button>
           </div>
         </div>
 
