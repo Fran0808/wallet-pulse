@@ -1,10 +1,11 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import type { TransactionFilterParams } from '../services/api';
-import type { FinancialSummary, Transaction, PageResponse, EmailSyncResponse } from '../types';
+import type { FinancialSummary, PeriodAnalytics, Transaction, PageResponse, EmailSyncResponse } from '../types';
 
 export function useFinance() {
   const [summary, setSummary] = useState<FinancialSummary | null>(null);
+  const [periodAnalytics, setPeriodAnalytics] = useState<PeriodAnalytics | null>(null);
   const [transactionsPage, setTransactionsPage] = useState<PageResponse<Transaction> | null>(null);
   const [loadingSummary, setLoadingSummary] = useState<boolean>(true);
   const [loadingTransactions, setLoadingTransactions] = useState<boolean>(true);
@@ -22,10 +23,14 @@ export function useFinance() {
   const loadSummary = useCallback(async () => {
     try {
       setLoadingSummary(true);
-      const data = await api.getFinancialSummary();
-      setSummary(data);
+      const [sumData, periodData] = await Promise.all([
+        api.getFinancialSummary(),
+        api.getPeriodAnalytics(),
+      ]);
+      setSummary(sumData);
+      setPeriodAnalytics(periodData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al cargar resumen');
+      setError(err instanceof Error ? err.message : 'Error al cargar analítica financiera');
     } finally {
       setLoadingSummary(false);
     }
@@ -57,7 +62,6 @@ export function useFinance() {
       setError(null);
       const result = await api.syncEmails();
       setSyncResult(result);
-      // Reload both summary and transactions after successful sync
       await Promise.all([loadSummary(), loadTransactions()]);
       return result;
     } catch (err) {
@@ -79,6 +83,7 @@ export function useFinance() {
 
   return {
     summary,
+    periodAnalytics,
     transactionsPage,
     loadingSummary,
     loadingTransactions,

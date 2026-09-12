@@ -1,4 +1,4 @@
-﻿export type FlowType = 'INCOME' | 'EXPENSE';
+﻿export type FlowType = 'INCOME' | 'EXPENSE' | 'INTERNAL_TRANSFER';
 
 export type ChannelType =
   | 'TARJETA_CREDITO_BCP'
@@ -24,6 +24,28 @@ export interface FinancialSummary {
   totalExpense: number;
   totalIncome: number;
   totalTransactions: number;
+}
+
+export interface ChannelBreakdown {
+  channel: string;
+  amount: number;
+  percentage: number;
+  count: number;
+}
+
+export interface PeriodAnalytics {
+  periodName: string;
+  monthlyExpense: number;
+  monthlyIncome: number;
+  internalTransfersAmount: number;
+  totalMovements: number;
+  lastExpenseMerchant: string;
+  lastExpenseAmount: number;
+  lastExpenseDate: string | null;
+  topChannel: string;
+  topChannelAmount: number;
+  topChannelPercentage: number;
+  channelBreakdown: ChannelBreakdown[];
 }
 
 export interface PageResponse<T> {

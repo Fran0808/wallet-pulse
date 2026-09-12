@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 import { HeaderPulse } from './components/HeaderPulse';
-import { FinancialSummaryCards } from './components/FinancialSummaryCards';
+import { CleverHeroBanner } from './components/CleverHeroBanner';
 import { TransactionTable } from './components/TransactionTable';
 import { TransactionFilters } from './components/TransactionFilters';
 import { TransactionDetailModal } from './components/TransactionDetailModal';
@@ -9,7 +9,7 @@ import type { Transaction } from './types';
 
 export function App() {
   const {
-    summary,
+    periodAnalytics,
     transactionsPage,
     loadingSummary,
     loadingTransactions,
@@ -25,7 +25,7 @@ export function App() {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-indigo-500/20">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-emerald-500/20">
       {/* 1. Header Pulse */}
       <HeaderPulse
         isSyncing={isSyncing}
@@ -37,20 +37,15 @@ export function App() {
       {/* 2. Main Dashboard Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
-        {/* Section: Financial Summary */}
-        <section aria-labelledby="summary-heading">
-          <div className="mb-4">
-            <h2 id="summary-heading" className="text-lg font-bold text-slate-900">
-              Resumen Financiero Consolidado
-            </h2>
-            <p className="text-xs text-slate-500 font-medium">
-              Cálculo en vivo de ingresos y egresos capturados automáticamente
-            </p>
-          </div>
-          <FinancialSummaryCards summary={summary} loading={loadingSummary} />
+        {/* Hero Section: Clever-style Period Cashflow */}
+        <section aria-labelledby="hero-heading">
+          <h2 id="hero-heading" className="sr-only">
+            Resumen Financiero del Período
+          </h2>
+          <CleverHeroBanner analytics={periodAnalytics} loading={loadingSummary} />
         </section>
 
-        {/* Section: Transactions Ledger with Dynamic Filters */}
+        {/* Transactions Ledger with Dynamic Filters */}
         <section aria-labelledby="transactions-heading" className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
@@ -58,7 +53,7 @@ export function App() {
                 Movimientos Recientes
               </h2>
               <p className="text-xs text-slate-500 font-medium">
-                Filtra por tipo de flujo o busca compras por comercio
+                Compras con tarjeta BCP, transferencias y consumos indexados
               </p>
             </div>
           </div>

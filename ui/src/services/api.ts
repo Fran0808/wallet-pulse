@@ -1,5 +1,6 @@
 ﻿import type {
   FinancialSummary,
+  PeriodAnalytics,
   Transaction,
   PageResponse,
   EmailSyncResponse,
@@ -36,6 +37,11 @@ export const api = {
   async getFinancialSummary(): Promise<FinancialSummary> {
     const response = await fetch(`${BASE_URL}/analytics/summary`);
     return handleResponse<FinancialSummary>(response);
+  },
+
+  async getPeriodAnalytics(): Promise<PeriodAnalytics> {
+    const response = await fetch(`${BASE_URL}/analytics/period`);
+    return handleResponse<PeriodAnalytics>(response);
   },
 
   async getTransactions(params: TransactionFilterParams = {}): Promise<PageResponse<Transaction>> {
