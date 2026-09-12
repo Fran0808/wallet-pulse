@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   FinancialSummary,
   PeriodAnalytics,
   Transaction,
@@ -39,8 +39,13 @@ export const api = {
     return handleResponse<FinancialSummary>(response);
   },
 
-  async getPeriodAnalytics(): Promise<PeriodAnalytics> {
-    const response = await fetch(`${BASE_URL}/analytics/period`);
+  async getPeriodAnalytics(year?: number, month?: number): Promise<PeriodAnalytics> {
+    const query = new URLSearchParams();
+    if (year) query.set('year', String(year));
+    if (month) query.set('month', String(month));
+    const qs = query.toString() ? `?${query.toString()}` : '';
+
+    const response = await fetch(`${BASE_URL}/analytics/period${qs}`);
     return handleResponse<PeriodAnalytics>(response);
   },
 

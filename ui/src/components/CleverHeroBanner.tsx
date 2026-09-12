@@ -1,8 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   Calendar,
   CreditCard,
-  ShieldCheck,
   Sparkles,
 } from 'lucide-react';
 import type { PeriodAnalytics } from '../types';
@@ -11,18 +10,32 @@ import { formatCurrency, formatDate, getChannelLabel } from '../utils/formatters
 interface CleverHeroBannerProps {
   analytics: PeriodAnalytics | null;
   loading: boolean;
+  selectedYear: number;
+  selectedMonth: number;
+  onPeriodChange: (year: number, month: number) => void;
 }
 
-export const CleverHeroBanner: React.FC<CleverHeroBannerProps> = ({ analytics, loading }) => {
+export const CleverHeroBanner: React.FC<CleverHeroBannerProps> = ({
+  analytics,
+  loading,
+  selectedYear,
+  selectedMonth,
+  onPeriodChange,
+}) => {
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
+
+  const isCurrentMonth = selectedYear === currentYear && selectedMonth === currentMonth;
+
   if (loading || !analytics) {
     return (
       <div className="rounded-3xl bg-blue-900/10 border border-blue-200/60 p-8 animate-pulse">
         <div className="h-4 w-32 bg-blue-200 rounded mb-4" />
         <div className="h-12 w-48 bg-blue-300 rounded mb-6" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="h-20 bg-blue-100 rounded-2xl" />
-          <div className="h-20 bg-blue-100 rounded-2xl" />
-          <div className="h-20 bg-blue-100 rounded-2xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="h-24 bg-blue-100 rounded-2xl" />
+          <div className="h-24 bg-blue-100 rounded-2xl" />
         </div>
       </div>
     );
@@ -36,20 +49,52 @@ export const CleverHeroBanner: React.FC<CleverHeroBannerProps> = ({ analytics, l
 
       <div className="relative z-10 flex flex-col gap-6">
         
-        {/* Top bar: Period context */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-blue-400/30 pb-4">
-          <div>
+        {/* Top bar: Period context & Month Selector */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-blue-400/30 pb-4">
+          <div className="flex items-center gap-2.5">
             <span className="text-xs uppercase font-extrabold tracking-wider text-blue-200">
-              Control de Cashflow · {analytics.periodName || 'Este Período'}
+              Control de Cashflow
             </span>
-            <p className="text-xs text-blue-100/80 mt-0.5 font-medium">
-              Dinero movido en consumo real (excluye transferencias entre cuentas propias)
-            </p>
+            <span className="text-blue-300/60">·</span>
+            <span className="text-xs font-bold text-white uppercase tracking-wide">
+              {analytics.periodName || 'Este Período'} {selectedYear}
+            </span>
           </div>
+
+          {/* Period Selector Controls */}
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-950/40 text-blue-100 border border-blue-400/30 shadow-xs backdrop-blur-xs">
+            <div className="inline-flex p-1 rounded-xl bg-blue-950/40 border border-blue-400/30 backdrop-blur-xs text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => onPeriodChange(currentYear, currentMonth)}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  isCurrentMonth
+                    ? 'bg-white text-blue-900 shadow-xs'
+                    : 'text-blue-200 hover:text-white'
+                }`}
+              >
+                Este mes
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+                  const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+                  onPeriodChange(prevYear, prevMonth);
+                }}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  !isCurrentMonth
+                    ? 'bg-white text-blue-900 shadow-xs'
+                    : 'text-blue-200 hover:text-white'
+                }`}
+              >
+                Mes anterior
+              </button>
+            </div>
+
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-950/40 text-blue-100 border border-blue-400/30 shadow-xs backdrop-blur-xs">
               <Sparkles className="w-3.5 h-3.5 text-sky-300" />
-              <span>Tiempo real</span>
+              <span>{isCurrentMonth ? 'En vivo' : 'Histórico'}</span>
             </span>
           </div>
         </div>
@@ -57,7 +102,7 @@ export const CleverHeroBanner: React.FC<CleverHeroBannerProps> = ({ analytics, l
         {/* Hero Big Outflow */}
         <div>
           <span className="text-sm font-medium text-blue-100">
-            Total gastado este período
+            Total gastado en {analytics.periodName?.toLowerCase() || 'el período'}
           </span>
           <div className="mt-1 flex items-baseline gap-3 flex-wrap">
             <h2 className="text-4xl sm:text-5xl font-black font-num tracking-tight text-white">
@@ -69,75 +114,57 @@ export const CleverHeroBanner: React.FC<CleverHeroBannerProps> = ({ analytics, l
           </div>
         </div>
 
-        {/* 3 Sub-Cards: Widgets */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+        {/* 2 Sub-Cards: Balanced & Spacious Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
           
           {/* 1. Last detected payment */}
-          <div className="bg-white/10 hover:bg-white/15 transition-colors backdrop-blur-xs rounded-2xl p-4 border border-white/15 flex flex-col justify-between">
+          <div className="bg-white/10 hover:bg-white/15 transition-colors backdrop-blur-xs rounded-2xl p-5 border border-white/15 flex flex-col justify-between">
             <div className="flex items-center justify-between text-xs text-blue-100 font-medium">
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-sky-300" />
                 Último pago detectado
               </span>
-              <span className="text-[10px] text-blue-200 font-mono">
+              <span className="text-[11px] text-blue-200 font-mono">
                 {analytics.lastExpenseDate ? formatDate(analytics.lastExpenseDate) : 'N/A'}
               </span>
             </div>
             <div className="mt-3">
-              <p className="font-bold text-white text-base truncate">
+              <p className="font-bold text-white text-lg truncate">
                 {analytics.lastExpenseMerchant}
               </p>
-              <p className="text-sm font-bold font-num text-sky-200 mt-0.5">
+              <p className="text-base font-bold font-num text-sky-200 mt-0.5">
                 - {formatCurrency(analytics.lastExpenseAmount)}
               </p>
             </div>
           </div>
 
           {/* 2. Top Spending Channel */}
-          <div className="bg-white/10 hover:bg-white/15 transition-colors backdrop-blur-xs rounded-2xl p-4 border border-white/15 flex flex-col justify-between">
+          <div className="bg-white/10 hover:bg-white/15 transition-colors backdrop-blur-xs rounded-2xl p-5 border border-white/15 flex flex-col justify-between">
             <div className="flex items-center justify-between text-xs text-blue-100 font-medium">
               <span className="flex items-center gap-1.5">
                 <CreditCard className="w-3.5 h-3.5 text-sky-300" />
                 Mayor fuente de gasto
               </span>
-              <span className="text-xs font-bold text-white font-num">
+              <span className="text-sm font-bold text-white font-num">
                 {analytics.topChannelPercentage}%
               </span>
             </div>
             <div className="mt-3">
               <div className="flex items-center justify-between">
-                <p className="font-bold text-white text-base">
+                <p className="font-bold text-white text-lg">
                   {getChannelLabel(analytics.topChannel)}
                 </p>
-                <span className="text-xs font-num font-semibold text-sky-200">
+                <span className="text-sm font-num font-semibold text-sky-200">
                   {formatCurrency(analytics.topChannelAmount)}
                 </span>
               </div>
               {/* Progress bar */}
-              <div className="w-full bg-blue-950/50 rounded-full h-1.5 mt-2 overflow-hidden">
+              <div className="w-full bg-blue-950/50 rounded-full h-2 mt-2.5 overflow-hidden">
                 <div
-                  className="bg-sky-300 h-1.5 rounded-full transition-all"
+                  className="bg-sky-300 h-2 rounded-full transition-all"
                   style={{ width: `${Math.min(100, Math.max(10, analytics.topChannelPercentage))}%` }}
                 />
               </div>
-            </div>
-          </div>
-
-          {/* 3. Internal Transfers Excluded (Honesty Indicator) */}
-          <div className="bg-white/10 hover:bg-white/15 transition-colors backdrop-blur-xs rounded-2xl p-4 border border-white/15 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-xs text-blue-100 font-medium">
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-sky-300" />
-                Transferencias propias
-              </span>
-              <span className="text-[10px] text-sky-200 bg-blue-950/40 px-2 py-0.5 rounded-full border border-sky-400/20">
-                Excluidas
-              </span>
-            </div>
-            <div className="mt-3">
-              <p className="text-xs text-blue-100/90 leading-relaxed">
-                <strong className="text-white font-num text-sm">{formatCurrency(analytics.internalTransfersAmount)}</strong> en traspasos entre cuentas propias sin inflar gastos.
-              </p>
             </div>
           </div>
 

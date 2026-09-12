@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import type { TransactionFilterParams } from '../services/api';
 import type { FinancialSummary, PeriodAnalytics, Transaction, PageResponse, EmailSyncResponse } from '../types';
@@ -13,6 +13,11 @@ export function useFinance() {
   const [syncResult, setSyncResult] = useState<EmailSyncResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [selectedPeriod, setSelectedPeriod] = useState<{ year: number; month: number }>({
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
+  });
+
   const [filters, setFilters] = useState<TransactionFilterParams>({
     page: 0,
     size: 10,
@@ -25,7 +30,7 @@ export function useFinance() {
       setLoadingSummary(true);
       const [sumData, periodData] = await Promise.all([
         api.getFinancialSummary(),
-        api.getPeriodAnalytics(),
+        api.getPeriodAnalytics(selectedPeriod.year, selectedPeriod.month),
       ]);
       setSummary(sumData);
       setPeriodAnalytics(periodData);
@@ -34,7 +39,7 @@ export function useFinance() {
     } finally {
       setLoadingSummary(false);
     }
-  }, []);
+  }, [selectedPeriod]);
 
   const loadTransactions = useCallback(async () => {
     try {
@@ -91,6 +96,8 @@ export function useFinance() {
     syncResult,
     error,
     filters,
+    selectedPeriod,
+    setSelectedPeriod,
     handlePageChange,
     handleFilterChange,
     triggerEmailSync,

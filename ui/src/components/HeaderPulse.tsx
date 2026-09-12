@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { RefreshCw, MailCheck, AlertCircle } from 'lucide-react';
 import type { EmailSyncResponse } from '../types';
 
@@ -29,11 +29,8 @@ export const HeaderPulse: React.FC<HeaderPulseProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-black tracking-tight text-slate-900">
-                  Wallet<span className="text-indigo-600">Pulse</span>
+                  Wallet<span className="text-blue-600">Pulse</span>
                 </h1>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/80">
-                  BCP Ingestion Live
-                </span>
               </div>
               <p className="text-xs text-slate-500 font-medium">
                 Monitoreo continuo de correos bancarios y billeteras

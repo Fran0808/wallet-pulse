@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { HeaderPulse } from './components/HeaderPulse';
 import { CleverHeroBanner } from './components/CleverHeroBanner';
 import { TopMerchantsCard } from './components/TopMerchantsCard';
@@ -19,6 +19,8 @@ export function App() {
     syncResult,
     error,
     filters,
+    selectedPeriod,
+    setSelectedPeriod,
     handlePageChange,
     handleFilterChange,
     triggerEmailSync,
@@ -44,7 +46,13 @@ export function App() {
           <h2 id="hero-heading" className="sr-only">
             Resumen Financiero del Período
           </h2>
-          <CleverHeroBanner analytics={periodAnalytics} loading={loadingSummary} />
+          <CleverHeroBanner
+            analytics={periodAnalytics}
+            loading={loadingSummary}
+            selectedYear={selectedPeriod.year}
+            selectedMonth={selectedPeriod.month}
+            onPeriodChange={(year, month) => setSelectedPeriod({ year, month })}
+          />
         </section>
 
         {/* 2 Columns Section: Top Merchants & Accounts/Channels Breakdown */}
