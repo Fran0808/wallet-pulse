@@ -48,6 +48,10 @@ public class EmailIngestionService {
         return imapEmailClient.testConnection();
     }
 
+    public boolean hasActiveConnection() {
+        return googleOAuthService.getValidAccessToken().isPresent();
+    }
+
     public EmailSyncResponse syncEmails() {
         List<EmailMessageDto> messages;
         Optional<String> googleToken = googleOAuthService.getValidAccessToken();

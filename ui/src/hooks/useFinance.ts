@@ -79,6 +79,17 @@ export function useFinance() {
     loadTransactions();
   }, [loadTransactions]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!isSyncing) {
+        loadSummary();
+        loadTransactions();
+      }
+    }, 45000);
+
+    return () => clearInterval(interval);
+  }, [loadSummary, loadTransactions, isSyncing]);
+
   const triggerEmailSync = async () => {
     try {
       setIsSyncing(true);

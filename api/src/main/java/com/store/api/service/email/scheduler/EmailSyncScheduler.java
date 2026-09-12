@@ -16,12 +16,23 @@ public class EmailSyncScheduler {
 
     private final EmailIngestionService emailIngestionService;
 
-    @Scheduled(cron = "${mail.sync.cron:0 */5 * * * *}")
+    @Scheduled(fixedDelayString = "${mail.sync.fixed-delay-ms:60000}", initialDelay = 15000)
     public void scheduleEmailSync() {
-        log.info("Starting scheduled background email synchronization...");
+        if (!emailIngestionService.hasActiveConnection()) {
+            log.debug("Background email synchronization skipped: Google account not yet connected.");
+            return;
+        }
+
+        log.info("Starting scheduled background email synchronization via Gmail API...");
         try {
             EmailSyncResponse response = emailIngestionService.syncEmails();
-            log.info("Scheduled email sync completed: scanned={}, saved={}", response.getScannedCount(), response.getSavedCount());
+            if (response.getSavedCount() > 0) {
+                log.info("Scheduled email sync completed successfully: scanned={}, saved={}",
+                        response.getScannedCount(), response.getSavedCount());
+            } else {
+                log.debug("Scheduled email sync: no new transactions found (scanned={})",
+                        response.getScannedCount());
+            }
         } catch (Exception e) {
             log.error("Scheduled email sync failed", e);
         }
