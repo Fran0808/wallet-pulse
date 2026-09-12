@@ -17,6 +17,7 @@ import { formatCurrency, formatDate, getChannelLabel } from '../utils/formatters
 interface TransactionTableProps {
   pageData: PageResponse<Transaction> | null;
   loading: boolean;
+  periodName?: string;
   onPageChange: (newPage: number) => void;
   onSelectTransaction: (tx: Transaction) => void;
 }
@@ -24,6 +25,7 @@ interface TransactionTableProps {
 export const TransactionTable: React.FC<TransactionTableProps> = ({
   pageData,
   loading,
+  periodName,
   onPageChange,
   onSelectTransaction,
 }) => {
@@ -71,7 +73,14 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
       {/* Header section of Table */}
       <div className="px-6 py-5 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h3 className="text-base font-bold text-slate-900">Registro de Transacciones</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-base font-bold text-slate-900">Registro de Movimientos</h3>
+            {periodName && (
+              <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200/70 px-2 py-0.5 rounded-md">
+                {periodName}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
             Haz clic en cualquier fila para inspeccionar el hash de auditoría y los detalles
           </p>

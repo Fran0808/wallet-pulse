@@ -31,6 +31,8 @@ export interface TransactionFilterParams {
   size?: number;
   flowType?: FlowType | '';
   search?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export const api = {
@@ -59,6 +61,12 @@ export const api = {
     }
     if (params.search && params.search.trim()) {
       query.set('search', params.search.trim());
+    }
+    if (params.startDate) {
+      query.set('startDate', params.startDate);
+    }
+    if (params.endDate) {
+      query.set('endDate', params.endDate);
     }
 
     const response = await fetch(`${BASE_URL}/transactions?${query.toString()}`);

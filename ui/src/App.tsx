@@ -94,6 +94,7 @@ export function App() {
           <TransactionTable
             pageData={transactionsPage}
             loading={loadingTransactions}
+            periodName={periodAnalytics ? `${periodAnalytics.periodName} ${selectedPeriod.year}` : undefined}
             onPageChange={handlePageChange}
             onSelectTransaction={(tx) => setSelectedTransaction(tx)}
           />
