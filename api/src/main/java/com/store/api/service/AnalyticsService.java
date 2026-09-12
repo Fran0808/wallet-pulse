@@ -31,10 +31,14 @@ public class AnalyticsService {
     }
 
     @Transactional(readOnly = true)
-    public com.store.api.model.dto.PeriodAnalyticsResponse getPeriodAnalytics() {
+    public com.store.api.model.dto.PeriodAnalyticsResponse getPeriodAnalytics(Integer year, Integer month) {
         java.time.LocalDate now = java.time.LocalDate.now();
-        java.time.LocalDateTime startOfMonth = now.withDayOfMonth(1).atStartOfDay();
-        java.time.LocalDateTime endOfMonth = now.withDayOfMonth(now.lengthOfMonth()).atTime(23, 59, 59);
+        int targetYear = (year != null && year > 2000) ? year : now.getYear();
+        int targetMonth = (month != null && month >= 1 && month <= 12) ? month : now.getMonthValue();
+
+        java.time.YearMonth targetYearMonth = java.time.YearMonth.of(targetYear, targetMonth);
+        java.time.LocalDateTime startOfMonth = targetYearMonth.atDay(1).atStartOfDay();
+        java.time.LocalDateTime endOfMonth = targetYearMonth.atEndOfMonth().atTime(23, 59, 59);
 
         java.math.BigDecimal monthlyExpense = transactionRepository.sumAmountByFlowTypeAndDateRange(FlowType.EXPENSE, startOfMonth, endOfMonth);
         java.math.BigDecimal monthlyIncome = transactionRepository.sumAmountByFlowTypeAndDateRange(FlowType.INCOME, startOfMonth, endOfMonth);
@@ -99,7 +103,7 @@ public class AnalyticsService {
         }
 
         return com.store.api.model.dto.PeriodAnalyticsResponse.builder()
-                .periodName(now.getMonth().name())
+                .periodName(targetYearMonth.getMonth().name())
                 .monthlyExpense(monthlyExpense)
                 .monthlyIncome(monthlyIncome)
                 .internalTransfersAmount(internalTransfers)

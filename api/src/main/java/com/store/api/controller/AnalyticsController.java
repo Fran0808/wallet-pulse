@@ -21,7 +21,10 @@ public class AnalyticsController {
     }
 
     @GetMapping("/period")
-    public ResponseEntity<com.store.api.model.dto.PeriodAnalyticsResponse> getPeriodAnalytics() {
-        return ResponseEntity.ok(analyticsService.getPeriodAnalytics());
+    public ResponseEntity<com.store.api.model.dto.PeriodAnalyticsResponse> getPeriodAnalytics(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Integer year,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Integer month
+    ) {
+        return ResponseEntity.ok(analyticsService.getPeriodAnalytics(year, month));
     }
 }
