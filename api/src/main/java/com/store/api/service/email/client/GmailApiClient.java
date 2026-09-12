@@ -38,7 +38,7 @@ public class GmailApiClient {
         List<EmailMessageDto> emailMessages = new ArrayList<>();
 
         try {
-            String query = "from:notificaciones@notificacionesbcp.com.pe";
+            String query = "(from:bcp OR from:yape OR from:notificacionesbcp.com.pe OR subject:bcp OR subject:yape OR subject:constancia OR subject:transferencia OR subject:consumo)";
             String listUrl = GMAIL_MESSAGES_ENDPOINT + "?q=" + URLEncoder.encode(query, StandardCharsets.UTF_8)
                     + "&maxResults=" + maxResults;
 
