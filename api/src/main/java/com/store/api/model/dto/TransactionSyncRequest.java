@@ -24,6 +24,8 @@ public class TransactionSyncRequest {
 
     private String channel;
 
+    private String cardLast4;
+
     @NotNull(message = "Transaction date is required")
     private LocalDateTime transactionDate;
 

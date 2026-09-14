@@ -15,6 +15,7 @@ public class TransactionResponse {
     private FlowType flowType;
     private String contactName;
     private String channel;
+    private String cardLast4;
     private LocalDateTime transactionDate;
     private String transactionHash;
     private LocalDateTime createdAt;

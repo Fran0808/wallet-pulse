@@ -32,6 +32,8 @@ public class PeriodAnalyticsResponse {
     @Builder
     public static class ChannelBreakdownDto {
         private String channel;
+        private String cardLast4;
+        private String displayName;
         private BigDecimal amount;
         private double percentage;
         private long count;

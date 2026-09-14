@@ -31,7 +31,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
     @Query("SELECT t FROM Transaction t WHERE t.flowType = 'EXPENSE' ORDER BY t.transactionDate DESC LIMIT 1")
     Optional<Transaction> findLatestExpense();
 
-    @Query("SELECT t.channel, COALESCE(SUM(t.amount), 0), COUNT(t) FROM Transaction t WHERE t.flowType = 'EXPENSE' AND t.transactionDate >= :start AND t.transactionDate <= :end GROUP BY t.channel ORDER BY SUM(t.amount) DESC")
+    @Query("SELECT t.channel, t.cardLast4, COALESCE(SUM(t.amount), 0), COUNT(t) FROM Transaction t WHERE t.flowType = 'EXPENSE' AND t.transactionDate >= :start AND t.transactionDate <= :end GROUP BY t.channel, t.cardLast4 ORDER BY SUM(t.amount) DESC")
     java.util.List<Object[]> findExpenseBreakdownByChannel(
             @Param("start") java.time.LocalDateTime start,
             @Param("end") java.time.LocalDateTime end

@@ -54,6 +54,7 @@ public class TransactionService {
                 .flowType(request.getFlowType())
                 .contactName(request.getContactName().trim())
                 .channel(channel)
+                .cardLast4(request.getCardLast4())
                 .transactionDate(request.getTransactionDate())
                 .transactionHash(request.getTransactionHash())
                 .build();
@@ -104,6 +105,7 @@ public class TransactionService {
                 .flowType(t.getFlowType())
                 .contactName(t.getContactName())
                 .channel(t.getChannel())
+                .cardLast4(t.getCardLast4())
                 .transactionDate(t.getTransactionDate())
                 .transactionHash(t.getTransactionHash())
                 .createdAt(t.getCreatedAt())

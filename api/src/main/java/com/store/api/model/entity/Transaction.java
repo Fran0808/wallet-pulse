@@ -31,6 +31,8 @@ public class Transaction {
     @Column(name = "channel", nullable = false, length = 50)
     @Builder.Default
     private String channel = "YAPE";
+    @Column(name = "card_last4", length = 10)
+    private String cardLast4;
     @Column(name = "transaction_date", nullable = false)
     private LocalDateTime transactionDate;
 

@@ -60,15 +60,35 @@ public class AnalyticsService {
 
         for (Object[] row : rawBreakdown) {
             String channel = (String) row[0];
-            java.math.BigDecimal amount = (java.math.BigDecimal) row[1];
-            long count = ((Number) row[2]).longValue();
+            String cardLast4 = (String) row[1];
+            java.math.BigDecimal amount = (java.math.BigDecimal) row[2];
+            long count = ((Number) row[3]).longValue();
 
             double percentage = monthlyExpense.compareTo(java.math.BigDecimal.ZERO) > 0
                     ? amount.divide(monthlyExpense, 4, java.math.RoundingMode.HALF_UP).doubleValue() * 100
                     : 0.0;
 
+            String displayName;
+            if (cardLast4 != null && !cardLast4.isBlank()) {
+                if (channel != null && channel.contains("CREDITO")) {
+                    displayName = "BCP Crédito **" + cardLast4;
+                } else if (channel != null && channel.contains("DEBITO")) {
+                    displayName = "BCP Débito **" + cardLast4;
+                } else {
+                    displayName = "BCP **" + cardLast4;
+                }
+            } else if (channel != null && channel.contains("YAPE")) {
+                displayName = "Yape";
+            } else if (channel != null) {
+                displayName = channel.replace("_", " ");
+            } else {
+                displayName = "Desconocido";
+            }
+
             breakdownList.add(com.store.api.model.dto.PeriodAnalyticsResponse.ChannelBreakdownDto.builder()
                     .channel(channel)
+                    .cardLast4(cardLast4)
+                    .displayName(displayName)
                     .amount(amount)
                     .percentage(Math.round(percentage * 10.0) / 10.0)
                     .count(count)
@@ -77,7 +97,7 @@ public class AnalyticsService {
 
         if (!breakdownList.isEmpty()) {
             com.store.api.model.dto.PeriodAnalyticsResponse.ChannelBreakdownDto first = breakdownList.getFirst();
-            topChannel = first.getChannel();
+            topChannel = first.getDisplayName() != null ? first.getDisplayName() : first.getChannel();
             topChannelAmount = first.getAmount();
             topChannelPercentage = first.getPercentage();
         }
