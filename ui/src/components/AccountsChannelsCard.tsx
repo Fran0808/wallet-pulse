@@ -59,7 +59,7 @@ export const AccountsChannelsCard: React.FC<AccountsChannelsCardProps> = ({
                       {getChannelIcon(c.channel)}
                     </div>
                     <span className="text-xs font-bold text-slate-800">
-                      {getChannelLabel(c.channel)}
+                      {c.displayName || getChannelLabel(c.channel)}
                     </span>
                   </div>
                   <span className="text-xs font-extrabold font-num text-slate-900">

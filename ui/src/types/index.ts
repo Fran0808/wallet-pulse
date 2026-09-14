@@ -14,6 +14,7 @@ export interface Transaction {
   flowType: FlowType;
   contactName: string;
   channel: ChannelType | string;
+  cardLast4?: string;
   transactionDate: string;
   transactionHash: string;
   createdAt: string;
@@ -28,6 +29,8 @@ export interface FinancialSummary {
 
 export interface ChannelBreakdown {
   channel: string;
+  cardLast4?: string;
+  displayName?: string;
   amount: number;
   percentage: number;
   count: number;

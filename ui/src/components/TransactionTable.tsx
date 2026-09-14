@@ -29,20 +29,20 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
   onPageChange,
   onSelectTransaction,
 }) => {
-  const getChannelBadge = (channel: string) => {
+  const getChannelBadge = (channel: string, cardLast4?: string) => {
     switch (channel) {
       case 'TARJETA_CREDITO_BCP':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/80">
             <CreditCard className="w-3.5 h-3.5 text-blue-600" />
-            <span>Crédito BCP</span>
+            <span>Crédito BCP{cardLast4 ? ` **${cardLast4}` : ''}</span>
           </span>
         );
       case 'TARJETA_DEBITO_BCP':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200/80">
             <CreditCard className="w-3.5 h-3.5 text-sky-600" />
-            <span>Débito BCP</span>
+            <span>Débito BCP{cardLast4 ? ` **${cardLast4}` : ''}</span>
           </span>
         );
       case 'YAPE':
@@ -62,7 +62,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-            {getChannelLabel(channel)}
+            {getChannelLabel(channel)}{cardLast4 ? ` **${cardLast4}` : ''}
           </span>
         );
     }
@@ -194,7 +194,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
 
                     {/* Channel Badge */}
                     <td className="py-4 px-6 whitespace-nowrap">
-                      {getChannelBadge(tx.channel)}
+                      {getChannelBadge(tx.channel, tx.cardLast4)}
                     </td>
 
                     {/* Date */}
