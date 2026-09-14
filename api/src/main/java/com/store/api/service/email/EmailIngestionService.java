@@ -83,6 +83,7 @@ public class EmailIngestionService {
                     req.setFlowType(parsed.getFlowType());
                     req.setContactName(parsed.getMerchantName());
                     req.setChannel(parsed.getChannel());
+                    req.setCardLast4(parsed.getCardLast4());
                     req.setTransactionDate(parsed.getTransactionDate());
                     req.setTransactionHash(parsed.getTransactionHash());
                     req.setRawNotificationText(parsed.getRawBody());

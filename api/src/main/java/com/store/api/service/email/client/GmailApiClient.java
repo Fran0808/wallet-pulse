@@ -38,15 +38,19 @@ public class GmailApiClient {
         List<EmailMessageDto> emailMessages = new ArrayList<>();
 
         try {
-            String query = "(from:bcp OR from:yape OR from:notificacionesbcp.com.pe OR subject:bcp OR subject:yape OR subject:constancia OR subject:transferencia OR subject:consumo)";
-            String listUrl = GMAIL_MESSAGES_ENDPOINT + "?q=" + URLEncoder.encode(query, StandardCharsets.UTF_8)
-                    + "&maxResults=" + maxResults;
+            String query = "BCP OR Yape OR constancia OR consumo OR notificacionesbcp.com.pe OR notificaciones@yape.pe OR yape.pe";
+            log.info("Querying Gmail REST API with q=[{}] and maxResults=[{}]", query, maxResults);
 
             String listRaw = restClient.get()
-                    .uri(listUrl)
+                    .uri(GMAIL_MESSAGES_ENDPOINT, uriBuilder -> uriBuilder
+                            .queryParam("q", query)
+                            .queryParam("maxResults", maxResults)
+                            .build())
                     .header("Authorization", "Bearer " + accessToken)
                     .retrieve()
                     .body(String.class);
+
+            log.info("Gmail API search response: {}", listRaw);
 
             JsonNode listJson = objectMapper.readTree(listRaw);
             JsonNode messagesNode = listJson.path("messages");

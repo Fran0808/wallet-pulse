@@ -15,7 +15,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.core.annotation.Order;
+
 @Component
+@Order(2)
 public class BcpEmailParser implements BankEmailParser {
 
     private static final Pattern AMOUNT_PATTERN = Pattern.compile(
@@ -44,11 +47,9 @@ public class BcpEmailParser implements BankEmailParser {
         String cleanSender = sender != null ? sender.toLowerCase() : "";
         String cleanSubject = subject != null ? subject.toLowerCase() : "";
 
-        return cleanSender.contains("bcp") ||
-                cleanSender.contains("notificacionesbcp.com.pe") ||
-                cleanSender.contains("yape") ||
-                cleanSubject.contains("bcp") ||
-                cleanSubject.contains("yape");
+        return cleanSender.contains("notificacionesbcp.com.pe") ||
+                (cleanSender.contains("bcp") && !cleanSender.contains("yape")) ||
+                (cleanSubject.contains("bcp") && !cleanSubject.contains("yape"));
     }
 
     @Override

@@ -1,15 +1,17 @@
 package com.store.api.service.email.parser;
 
-import com.store.api.model.dto.email.ParsedEmailTransaction;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.store.api.model.dto.email.ParsedEmailTransaction;
 
 class BankEmailParserDispatcherTest {
 
@@ -17,8 +19,9 @@ class BankEmailParserDispatcherTest {
 
     @BeforeEach
     void setUp() {
+        YapeEmailParser yapeParser = new YapeEmailParser();
         BcpEmailParser bcpParser = new BcpEmailParser();
-        dispatcher = new BankEmailParserDispatcher(List.of(bcpParser));
+        dispatcher = new BankEmailParserDispatcher(List.of(yapeParser, bcpParser));
     }
 
     @Test
@@ -35,6 +38,22 @@ class BankEmailParserDispatcherTest {
         assertEquals("PUMACAHUA VES", tx.getMerchantName());
         assertEquals("TARJETA_CREDITO_BCP", tx.getChannel());
         assertEquals("0000311221", tx.getOperationNumber());
+    }
+
+    @Test
+    void shouldDispatchYapeEmailCorrectly() {
+        String sender = "YAPE Notificaciones <notificaciones@yape.pe>";
+        String subject = "¡Tu pago en BUSSINESS fue exitoso!";
+        String body = "Monto total S/ 35.20 Destino: BUSSINESS ID de operación: 01M2DHQTT772XGGYWDHX2AP8B0";
+
+        Optional<ParsedEmailTransaction> result = dispatcher.dispatchAndParse(sender, subject, body, LocalDateTime.now());
+
+        assertTrue(result.isPresent());
+        ParsedEmailTransaction tx = result.get();
+        assertEquals(new BigDecimal("30.00"), tx.getAmount());
+        assertEquals("BUSSINESS", tx.getMerchantName());
+        assertEquals("YAPE", tx.getChannel());
+        assertEquals("01M2DHQTT772XGGYWDHX2AP8B0", tx.getOperationNumber());
     }
 
     @Test
