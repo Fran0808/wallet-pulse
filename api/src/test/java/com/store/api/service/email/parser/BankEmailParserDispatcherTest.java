@@ -1,17 +1,15 @@
 package com.store.api.service.email.parser;
 
+import com.store.api.model.dto.email.ParsedEmailTransaction;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import com.store.api.model.dto.email.ParsedEmailTransaction;
+import static org.junit.jupiter.api.Assertions.*;
 
 class BankEmailParserDispatcherTest {
 
@@ -28,32 +26,32 @@ class BankEmailParserDispatcherTest {
     void shouldDispatchBcpEmailCorrectly() {
         String sender = "BCP Notificaciones <notificaciones@notificacionesbcp.com.pe>";
         String subject = "Realizaste un consumo con tu Tarjeta de Crédito BCP";
-        String body = "Monto: S/ 4.90 Establecimiento: PUMACAHUA VES Nro. de operación: 0000311221";
+        String body = "Monto: S/ 10.00 Establecimiento: TIENDA EJEMPLO Nro. de operación: 0000123456";
 
         Optional<ParsedEmailTransaction> result = dispatcher.dispatchAndParse(sender, subject, body, LocalDateTime.now());
 
         assertTrue(result.isPresent());
         ParsedEmailTransaction tx = result.get();
-        assertEquals(new BigDecimal("4.90"), tx.getAmount());
-        assertEquals("PUMACAHUA VES", tx.getMerchantName());
+        assertEquals(new BigDecimal("10.00"), tx.getAmount());
+        assertEquals("TIENDA EJEMPLO", tx.getMerchantName());
         assertEquals("TARJETA_CREDITO_BCP", tx.getChannel());
-        assertEquals("0000311221", tx.getOperationNumber());
+        assertEquals("0000123456", tx.getOperationNumber());
     }
 
     @Test
     void shouldDispatchYapeEmailCorrectly() {
         String sender = "YAPE Notificaciones <notificaciones@yape.pe>";
-        String subject = "¡Tu pago en BUSSINESS fue exitoso!";
-        String body = "Monto total S/ 35.20 Destino: BUSSINESS ID de operación: 01M2DHQTT772XGGYWDHX2AP8B0";
+        String subject = "¡Tu pago en COMERCIO EJEMPLO fue exitoso!";
+        String body = "Monto total S/ 25.00 Destino: COMERCIO EJEMPLO ID de operación: 01ABCDEF998877665544332211";
 
         Optional<ParsedEmailTransaction> result = dispatcher.dispatchAndParse(sender, subject, body, LocalDateTime.now());
 
         assertTrue(result.isPresent());
         ParsedEmailTransaction tx = result.get();
-        assertEquals(new BigDecimal("35.20"), tx.getAmount());
-        assertEquals("BUSSINESS", tx.getMerchantName());
+        assertEquals(new BigDecimal("25.00"), tx.getAmount());
+        assertEquals("COMERCIO EJEMPLO", tx.getMerchantName());
         assertEquals("YAPE", tx.getChannel());
-        assertEquals("01M2DHQTT772XGGYWDHX2AP8B0", tx.getOperationNumber());
+        assertEquals("01ABCDEF998877665544332211", tx.getOperationNumber());
     }
 
     @Test

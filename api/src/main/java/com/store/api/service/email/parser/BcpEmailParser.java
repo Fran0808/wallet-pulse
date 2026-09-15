@@ -28,7 +28,12 @@ public class BcpEmailParser implements BankEmailParser {
     );
 
     private static final Pattern MERCHANT_PATTERN = Pattern.compile(
-            "(?:establecimiento|comercio|empresa|destino|beneficiario|a\\s+favor\\s+de):?\\s*([A-Za-z0-9À-ÿ\\s.,&'-]+?)(?=\\s*(?:fecha|importe|monto|nro|número|tarjeta|$))",
+            "(?:establecimiento|comercio|empresa|destino|beneficiario|a\\s+favor\\s+de):?\\s*([A-Za-z0-9À-ÿ\\s.,&'/*#_+-]+?)(?=\\s*(?:fecha|importe|monto|nro|número|numero|tarjeta|operaci[oó]n|$))",
+            Pattern.CASE_INSENSITIVE
+    );
+
+    private static final Pattern CONSUMO_EN_PATTERN = Pattern.compile(
+            "(?:consumo\\s+(?:de\\s+[^\\s]+\\s+)?(?:con\\s+[^\\s]+\\s+)?en\\s+)([A-Za-z0-9À-ÿ\\s.,&'/*#_+-]+?)(?=[.,;]|\\s*(?:por\\s+tu\\s+seguridad|fecha|monto|importe|$))",
             Pattern.CASE_INSENSITIVE
     );
 
@@ -38,7 +43,7 @@ public class BcpEmailParser implements BankEmailParser {
     );
 
     private static final Pattern OP_NUMBER_PATTERN = Pattern.compile(
-            "(?:nro\\.?|número)\\s*(?:de)?\\s*operaci[oó]n:?\\s*([0-9]+)",
+            "(?:nro\\.?|número|numero)\\s*(?:de)?\\s*operaci[oó]n:?\\s*([0-9]+)",
             Pattern.CASE_INSENSITIVE
     );
 
@@ -103,6 +108,15 @@ public class BcpEmailParser implements BankEmailParser {
             String found = merchantMatcher.group(1).replaceAll("[.,;:]+$", "").trim();
             if (found.length() >= 3 && !found.equalsIgnoreCase("bcp")) {
                 merchant = found;
+            }
+        }
+        if ("Consumo BCP".equals(merchant)) {
+            Matcher enMatcher = CONSUMO_EN_PATTERN.matcher(cleanText);
+            if (enMatcher.find()) {
+                String found = enMatcher.group(1).replaceAll("[.,;:]+$", "").trim();
+                if (found.length() >= 3 && !found.equalsIgnoreCase("bcp")) {
+                    merchant = found;
+                }
             }
         }
 

@@ -1,17 +1,15 @@
 package com.store.api.service.email;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import com.store.api.model.dto.email.ParsedEmailTransaction;
 import com.store.api.model.enums.FlowType;
 import com.store.api.service.email.parser.YapeEmailParser;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class YapeEmailParserTest {
 
@@ -23,28 +21,28 @@ class YapeEmailParserTest {
     }
 
     @Test
-    void shouldParseAuthenticBetanoPaymentEmail() {
-        String subject = "¡Tu pago en BUSSINESS fue exitoso!";
+    void shouldParseMerchantPaymentEmail() {
+        String subject = "¡Tu pago en COMERCIO EJEMPLO fue exitoso!";
         String body = """
-                Hola FRANCISCO,
-                ¡Tu pago en BUSSINESS fue exitoso!
-                Monto total S/ 30.00
-                Fecha y hora: 13 septiembre 2026 - 09:11 a. m.
-                Titular de la cuenta: FRANCISCO JAVIER ORTEGA QUISPE
-                Número de celular: *** *** 501
-                Destino: BUSSINESS
-                ID de operación: 01M2DHQTT772XGGYWDHX2AP8B0
+                Hola JUAN,
+                ¡Tu pago en COMERCIO EJEMPLO fue exitoso!
+                Monto total S/ 25.00
+                Fecha y hora: 10 septiembre 2026 - 10:00 a. m.
+                Titular de la cuenta: JUAN PEREZ
+                Número de celular: *** *** 000
+                Destino: COMERCIO EJEMPLO
+                ID de operación: 01ABCDEF998877665544332211
                 """;
 
-        ParsedEmailTransaction tx = parser.parse(subject, body, LocalDateTime.of(2026, 9, 13, 9, 11));
+        ParsedEmailTransaction tx = parser.parse(subject, body, LocalDateTime.of(2026, 9, 10, 10, 0));
 
         assertNotNull(tx);
-        assertEquals(new BigDecimal("30.00"), tx.getAmount());
+        assertEquals(new BigDecimal("25.00"), tx.getAmount());
         assertEquals("PEN", tx.getCurrency());
         assertEquals(FlowType.EXPENSE, tx.getFlowType());
-        assertEquals("BUSSINESS", tx.getMerchantName());
+        assertEquals("COMERCIO EJEMPLO", tx.getMerchantName());
         assertEquals("YAPE", tx.getChannel());
-        assertEquals("01M2DHQTT772XGGYWDHX2AP8B0", tx.getOperationNumber());
+        assertEquals("01ABCDEF998877665544332211", tx.getOperationNumber());
         assertNotNull(tx.getTransactionHash());
     }
 
@@ -52,11 +50,11 @@ class YapeEmailParserTest {
     void shouldIgnoreAdministrativeSettingsEmail() {
         String subject = "Cambios en monto de yapeo alto";
         String body = """
-                Hola Francisco Javier
+                Hola Usuario
                 Queremos contarte que actualizaste el monto de tus notificaciones a tu correo.
                 Monto mínimo anterior: S/ 100.00
                 Monto mínimo nuevo: S/ 10.00
-                Fecha y hora: 13/09/2026 09:07:07 am
+                Fecha y hora: 10/09/2026 09:00:00 am
                 """;
 
         ParsedEmailTransaction tx = parser.parse(subject, body, LocalDateTime.now());
@@ -68,8 +66,8 @@ class YapeEmailParserTest {
     void shouldParseIncomingYapeSuccessfully() {
         String subject = "¡Te yapearon!";
         String body = """
-                ¡Hola Francisco!
-                Te yapeó Maria Lopez S/ 45.00
+                ¡Hola Juan!
+                Te yapeó Maria Perez S/ 45.00
                 ID de operación: 998877AABB
                 """;
 
@@ -78,7 +76,7 @@ class YapeEmailParserTest {
         assertNotNull(tx);
         assertEquals(new BigDecimal("45.00"), tx.getAmount());
         assertEquals(FlowType.INCOME, tx.getFlowType());
-        assertEquals("Maria Lopez", tx.getMerchantName());
+        assertEquals("Maria Perez", tx.getMerchantName());
         assertEquals("YAPE", tx.getChannel());
         assertEquals("998877AABB", tx.getOperationNumber());
     }

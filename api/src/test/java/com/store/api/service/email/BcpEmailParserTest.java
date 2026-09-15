@@ -27,10 +27,10 @@ class BcpEmailParserTest {
                 <html>
                 <body>
                     <p>Estimado cliente,</p>
-                    <p>Le informamos que se ha realizado un consumo con su tarjeta terminada en 4589.</p>
+                    <p>Le informamos que se ha realizado un consumo con su tarjeta terminada en 9999.</p>
                     <table>
                         <tr><td>Importe:</td><td>S/ 25.50</td></tr>
-                        <tr><td>Establecimiento:</td><td>TAMBO SAN ISIDRO</td></tr>
+                        <tr><td>Establecimiento:</td><td>TIENDA EJEMPLO</td></tr>
                         <tr><td>Nro. de operación:</td><td>98765432</td></tr>
                     </table>
                 </body>
@@ -43,9 +43,9 @@ class BcpEmailParserTest {
         assertEquals(new BigDecimal("25.50"), tx.getAmount());
         assertEquals("PEN", tx.getCurrency());
         assertEquals(FlowType.EXPENSE, tx.getFlowType());
-        assertEquals("TAMBO SAN ISIDRO", tx.getMerchantName());
+        assertEquals("TIENDA EJEMPLO", tx.getMerchantName());
         assertEquals("TARJETA_CREDITO_BCP", tx.getChannel());
-        assertEquals("4589", tx.getCardLast4());
+        assertEquals("9999", tx.getCardLast4());
         assertEquals("98765432", tx.getOperationNumber());
         assertNotNull(tx.getTransactionHash());
     }
@@ -56,9 +56,9 @@ class BcpEmailParserTest {
         String htmlBody = """
                 <div>
                     <h3>Detalle de operación</h3>
-                    <p>Tarjeta débito **** 1122</p>
+                    <p>Tarjeta débito **** 8888</p>
                     <p>Monto: US$ 14.99</p>
-                    <p>Comercio: SPOTIFY</p>
+                    <p>Comercio: STREAMING SERVICE</p>
                     <p>Número de operación: 12345678</p>
                 </div>
                 """;
@@ -69,24 +69,36 @@ class BcpEmailParserTest {
         assertEquals(new BigDecimal("14.99"), tx.getAmount());
         assertEquals("USD", tx.getCurrency());
         assertEquals(FlowType.EXPENSE, tx.getFlowType());
-        assertEquals("SPOTIFY", tx.getMerchantName());
+        assertEquals("STREAMING SERVICE", tx.getMerchantName());
         assertEquals("TARJETA_DEBITO_BCP", tx.getChannel());
-        assertEquals("1122", tx.getCardLast4());
+        assertEquals("8888", tx.getCardLast4());
         assertEquals("12345678", tx.getOperationNumber());
     }
 
     @Test
-    void shouldParseYapeTransferEmailSuccessfully() {
-        String subject = "Constancia de transferencia Yape";
-        String textBody = "Se realizó un envío exitoso por S/ 15.00 a favor de Carlos Mendoza. Número de operación: 55443322";
+    void shouldParseSpecialCharacterMerchantPurchaseSuccessfully() {
+        String subject = "Aviso de operación: Consumo con Tarjeta de Débito BCP";
+        String body = """
+                Estimado cliente, Realizaste un consumo de S/ 19.90 con tu Tarjeta de Débito BCP en ONLINE*MARKET.COM LTD.
+                Por tu seguridad, te enviamos los datos de tu operación.
+                Monto Total del consumo S/ 19.90
+                Datos de la operación
+                Operación realizada Consumo Tarjeta de Débito
+                Fecha y hora 05 de setiembre de 2026 - 10:00 AM
+                Número de Tarjeta de Débito ************1234
+                Empresa ONLINE*MARKET.COM LTD
+                Número de operación 123456
+                """;
 
-        ParsedEmailTransaction tx = parser.parse(subject, textBody, LocalDateTime.now());
+        ParsedEmailTransaction tx = parser.parse(subject, body, LocalDateTime.of(2026, 9, 5, 10, 0));
 
         assertNotNull(tx);
-        assertEquals(new BigDecimal("15.00"), tx.getAmount());
+        assertEquals(new BigDecimal("19.90"), tx.getAmount());
+        assertEquals("PEN", tx.getCurrency());
         assertEquals(FlowType.EXPENSE, tx.getFlowType());
-        assertEquals("Carlos Mendoza", tx.getMerchantName());
-        assertEquals("YAPE", tx.getChannel());
-        assertEquals("55443322", tx.getOperationNumber());
+        assertEquals("ONLINE*MARKET.COM LTD", tx.getMerchantName());
+        assertEquals("TARJETA_DEBITO_BCP", tx.getChannel());
+        assertEquals("1234", tx.getCardLast4());
+        assertEquals("123456", tx.getOperationNumber());
     }
 }
