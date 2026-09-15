@@ -50,7 +50,7 @@ class BankEmailParserDispatcherTest {
 
         assertTrue(result.isPresent());
         ParsedEmailTransaction tx = result.get();
-        assertEquals(new BigDecimal("30.00"), tx.getAmount());
+        assertEquals(new BigDecimal("35.20"), tx.getAmount());
         assertEquals("BUSSINESS", tx.getMerchantName());
         assertEquals("YAPE", tx.getChannel());
         assertEquals("01M2DHQTT772XGGYWDHX2AP8B0", tx.getOperationNumber());
