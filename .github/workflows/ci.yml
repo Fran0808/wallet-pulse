@@ -46,27 +46,48 @@ jobs:
           cd api
           mvn clean test compile -Dspring.datasource.url=jdbc:postgresql://localhost:5432/finance_db -Dspring.datasource.username=postgres -Dspring.datasource.password=admin
 
-  android-ci:
-    name: Android App (Kotlin / Gradle)
+  frontend-ci:
+    name: Frontend Dashboard (React 19 / Vite)
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'gradle'
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Make Gradlew executable
-        run: chmod +x android/gradlew
-
-      - name: Run Android Unit Tests and Assemble Debug APK
+      - name: Install Dependencies
         run: |
-          cd android
-          ./gradlew testDebugUnitTest assembleDebug --no-daemon
+          cd ui
+          npm ci
+
+      - name: Build Frontend Application
+        run: |
+          cd ui
+          npm run build
+
+  # Note: android-ci is paused as per AGENTS.md (Section 2.2).
+  # To reactivate when mobile development resumes, uncomment this block:
+  # android-ci:
+  #   name: Android App (Kotlin / Gradle)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout source code
+  #       uses: actions/checkout@v4
+  #     - name: Set up JDK 21
+  #       uses: actions/setup-java@v4
+  #       with:
+  #         java-version: '21'
+  #         distribution: 'temurin'
+  #         cache: 'gradle'
+  #     - name: Make Gradlew executable
+  #       run: chmod +x android/gradlew
+  #     - name: Run Android Unit Tests and Assemble Debug APK
+  #       run: |
+  #         cd android
+  #         ./gradlew testDebugUnitTest assembleDebug --no-daemon
