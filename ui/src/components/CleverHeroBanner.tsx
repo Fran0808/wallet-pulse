@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Calendar,
   CreditCard,
-  Sparkles,
 } from 'lucide-react';
 import type { PeriodAnalytics } from '../types';
 import { formatCurrency, formatDate, getChannelLabel } from '../utils/formatters';
@@ -95,11 +94,6 @@ export const CleverHeroBanner: React.FC<CleverHeroBannerProps> = ({
                 Mes anterior
               </button>
             </div>
-
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-950/40 text-blue-100 border border-blue-400/30 shadow-xs backdrop-blur-xs">
-              <Sparkles className="w-3.5 h-3.5 text-sky-300" />
-              <span>{isCurrentMonth ? 'En vivo' : 'Histórico'}</span>
-            </span>
           </div>
         </div>
 
