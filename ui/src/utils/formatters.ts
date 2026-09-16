@@ -1,4 +1,4 @@
-﻿export function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('es-PE', {
     style: 'currency',
     currency: 'PEN',
@@ -19,6 +19,21 @@ export function formatDate(isoString: string): string {
       minute: '2-digit',
       hour12: true,
     }).format(date);
+  } catch {
+    return isoString;
+  }
+}
+
+export function formatRelativeDate(isoString: string): string {
+  if (!isoString) return '';
+  try {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'Hoy';
+    if (diffDays === 1) return 'Ayer';
+    if (diffDays < 7) return `Hace ${diffDays} días`;
+    return formatDate(isoString);
   } catch {
     return isoString;
   }

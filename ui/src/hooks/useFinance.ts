@@ -39,9 +39,9 @@ export function useFinance() {
     setFilters((prev) => ({ ...prev, page: 0 }));
   };
 
-  const loadSummary = useCallback(async () => {
+  const loadSummary = useCallback(async (silent = false) => {
     try {
-      setLoadingSummary(true);
+      if (!silent) setLoadingSummary(true);
       const [sumData, periodData] = await Promise.all([
         api.getFinancialSummary(),
         api.getPeriodAnalytics(selectedPeriod.year, selectedPeriod.month),
@@ -51,13 +51,13 @@ export function useFinance() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar analítica financiera');
     } finally {
-      setLoadingSummary(false);
+      if (!silent) setLoadingSummary(false);
     }
   }, [selectedPeriod]);
 
-  const loadTransactions = useCallback(async () => {
+  const loadTransactions = useCallback(async (silent = false) => {
     try {
-      setLoadingTransactions(true);
+      if (!silent) setLoadingTransactions(true);
       const dateRange = getPeriodDateRange(selectedPeriod.year, selectedPeriod.month);
       const data = await api.getTransactions({
         ...filters,
@@ -67,7 +67,7 @@ export function useFinance() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar transacciones');
     } finally {
-      setLoadingTransactions(false);
+      if (!silent) setLoadingTransactions(false);
     }
   }, [filters, selectedPeriod]);
 
@@ -82,8 +82,9 @@ export function useFinance() {
   useEffect(() => {
     const interval = setInterval(() => {
       if (!isSyncing) {
-        loadSummary();
-        loadTransactions();
+        // Silent background polling: keeps data up to date without screen flickering
+        loadSummary(true);
+        loadTransactions(true);
       }
     }, 45000);
 

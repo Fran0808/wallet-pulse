@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { HeaderPulse } from './components/HeaderPulse';
-import { CleverHeroBanner } from './components/CleverHeroBanner';
-import { TopMerchantsCard } from './components/TopMerchantsCard';
-import { AccountsChannelsCard } from './components/AccountsChannelsCard';
-import { TransactionTable } from './components/TransactionTable';
-import { TransactionFilters } from './components/TransactionFilters';
+import { SidebarNavigation } from './components/SidebarNavigation';
+import type { NavView } from './components/SidebarNavigation';
+import { HomeView } from './components/views/HomeView';
+import { MyMoneyView } from './components/views/MyMoneyView';
+import { TransactionsView } from './components/views/TransactionsView';
+import { PlaceholderView } from './components/views/PlaceholderView';
 import { TransactionDetailModal } from './components/TransactionDetailModal';
 import { useFinance } from './hooks/useFinance';
 import type { Transaction } from './types';
+import { Menu, X, User } from 'lucide-react';
 
 export function App() {
   const {
@@ -23,77 +24,118 @@ export function App() {
     handleFilterChange,
   } = useFinance();
 
+  const [activeView, setActiveView] = useState<NavView>('inicio');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-500/20">
-      {/* 1. Header Pulse */}
-      <HeaderPulse error={error} />
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex font-sans selection:bg-indigo-500/20">
+      {/* 1. Mobile Sidebar Backdrop Drawer */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm lg:hidden transition-opacity"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
 
-      {/* 2. Main Dashboard Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
-        {/* Hero Section: Period Cashflow in Deep Cobalt */}
-        <section aria-labelledby="hero-heading">
-          <h2 id="hero-heading" className="sr-only">
-            Resumen Financiero del Período
-          </h2>
-          <CleverHeroBanner
-            analytics={periodAnalytics}
-            loading={loadingSummary}
-            selectedYear={selectedPeriod.year}
-            selectedMonth={selectedPeriod.month}
-            onPeriodChange={(year, month) => setSelectedPeriod({ year, month })}
-          />
-        </section>
+      {/* 2. Sidebar Navigation (FEAT-001) */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 transform lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out flex ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <SidebarNavigation
+          activeView={activeView}
+          onViewChange={(view) => {
+            setActiveView(view);
+            setMobileMenuOpen(false);
+          }}
+        />
+      </div>
 
-        {/* 2 Columns Section: Top Merchants & Accounts/Channels Breakdown */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <TopMerchantsCard
-            merchants={periodAnalytics?.topMerchants || []}
-            loading={loadingSummary}
-          />
-          <AccountsChannelsCard
-            channels={periodAnalytics?.channelBreakdown || []}
-            internalTransfersAmount={periodAnalytics?.internalTransfersAmount || 0}
-            loading={loadingSummary}
-          />
-        </section>
-
-        {/* Transactions Ledger with Dynamic Filters */}
-        <section aria-labelledby="transactions-heading" className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>
-              <h2 id="transactions-heading" className="text-lg font-bold text-slate-900">
-                Movimientos Recientes
-              </h2>
-              <p className="text-xs text-slate-500 font-medium">
-                Compras con tarjeta BCP, transferencias y consumos indexados
-              </p>
-            </div>
+      {/* 3. Main Application Container (FEAT-002) */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Top Navbar */}
+        <header className="h-16 shrink-0 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between z-10">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
+              aria-label="Abrir menú"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:inline-block">
+              {activeView === 'inicio'
+                ? 'Tablero de Control'
+                : activeView === 'mi-dinero'
+                ? 'Centro Analítico'
+                : activeView === 'movimientos'
+                ? 'Libro de Transacciones'
+                : 'Módulo del Sistema'}
+            </span>
           </div>
 
-          {/* Dynamic Filters with Transferencias Propias */}
-          <TransactionFilters
-            search={filters.search || ''}
-            flowType={filters.flowType || ''}
-            onSearchChange={(search) => handleFilterChange({ search })}
-            onFlowTypeChange={(flowType) => handleFilterChange({ flowType })}
-            onReset={() => handleFilterChange({ search: '', flowType: '' })}
-          />
+          {/* Right Header Badges */}
+          <div className="flex items-center gap-3">
+            {error && (
+              <span className="text-xs font-medium text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-100">
+                {error}
+              </span>
+            )}
+            <div className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center border border-indigo-100">
+              <User className="h-4 w-4" />
+            </div>
+          </div>
+        </header>
 
-          {/* Paginated Interactive Table */}
-          <TransactionTable
-            pageData={transactionsPage}
-            loading={loadingTransactions}
-            periodName={periodAnalytics ? `${periodAnalytics.periodName} ${selectedPeriod.year}` : undefined}
-            onPageChange={handlePageChange}
-            onSelectTransaction={(tx) => setSelectedTransaction(tx)}
-          />
-        </section>
-      </main>
+        {/* Scrollable View Content */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-8 max-w-7xl w-full mx-auto">
+          {activeView === 'inicio' && (
+            <HomeView
+              analytics={periodAnalytics}
+              recentTransactions={transactionsPage?.content || []}
+              loading={loadingSummary || loadingTransactions}
+              onNavigateToTransactions={() => setActiveView('movimientos')}
+              onSelectTransaction={(tx) => setSelectedTransaction(tx)}
+              selectedYear={selectedPeriod.year}
+              selectedMonth={selectedPeriod.month}
+              onPeriodChange={(year, month) => setSelectedPeriod({ year, month })}
+            />
+          )}
 
-      {/* 3. Native Accessible Transaction Detail Dialog */}
+          {activeView === 'mi-dinero' && (
+            <MyMoneyView
+              analytics={periodAnalytics}
+              loading={loadingSummary}
+              selectedYear={selectedPeriod.year}
+              selectedMonth={selectedPeriod.month}
+            />
+          )}
+
+          {activeView === 'movimientos' && (
+            <TransactionsView
+              pageData={transactionsPage}
+              loading={loadingTransactions}
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              onPageChange={handlePageChange}
+              onSelectTransaction={(tx) => setSelectedTransaction(tx)}
+              periodName={periodAnalytics ? `${periodAnalytics.periodName} ${selectedPeriod.year}` : undefined}
+            />
+          )}
+
+          {['tarjetas', 'presupuestos', 'configuracion'].includes(activeView) && (
+            <PlaceholderView
+              view={activeView}
+              onNavigateHome={() => setActiveView('inicio')}
+            />
+          )}
+        </main>
+      </div>
+
+      {/* 4. Native Accessible Transaction Detail Dialog */}
       <TransactionDetailModal
         transaction={selectedTransaction}
         onClose={() => setSelectedTransaction(null)}
