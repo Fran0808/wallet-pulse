@@ -16,5 +16,6 @@ public class EmailMessageDto {
     private String subject;
     private String from;
     private LocalDateTime sentDate;
+    private Long internalDateMs;
     private String body;
 }

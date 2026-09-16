@@ -7,7 +7,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -34,16 +37,36 @@ public class GmailApiClient {
     private final RestClient restClient = RestClient.create();
 
     public List<EmailMessageDto> fetchFinancialEmails(String accessToken, int maxResults) {
-        log.info("Fetching financial emails from Gmail REST API (maxResults={})...", maxResults);
+        return fetchFinancialEmails(accessToken, maxResults, null, id -> false);
+    }
+
+    public List<EmailMessageDto> fetchFinancialEmails(
+            String accessToken,
+            int maxResults,
+            Long lastSyncedEpochMs,
+            Predicate<String> isProcessedFilter) {
+        log.info("Fetching financial emails from Gmail REST API (maxResults={}, lastSyncedEpochMs={})...",
+                maxResults, lastSyncedEpochMs);
         List<EmailMessageDto> emailMessages = new ArrayList<>();
 
         try {
-            String query = "BCP OR Yape OR constancia OR consumo OR notificacionesbcp.com.pe OR notificaciones@yape.pe OR yape.pe";
-            log.info("Querying Gmail REST API with q=[{}] and maxResults=[{}]", query, maxResults);
+            String baseQuery = "BCP OR Yape OR constancia OR consumo OR notificacionesbcp.com.pe OR notificaciones@yape.pe OR yape.pe";
+            String query = baseQuery;
+
+            if (lastSyncedEpochMs != null && lastSyncedEpochMs > 0) {
+                // Look back 120 seconds before the cursor to absorb network delays or clock skew
+                long afterSeconds = (lastSyncedEpochMs / 1000) - 120;
+                if (afterSeconds > 0) {
+                    query = "(" + baseQuery + ") after:" + afterSeconds;
+                }
+            }
+
+            final String searchQuery = query;
+            log.info("Querying Gmail REST API with q=[{}] and maxResults=[{}]", searchQuery, maxResults);
 
             String listRaw = restClient.get()
                     .uri(GMAIL_MESSAGES_ENDPOINT, uriBuilder -> uriBuilder
-                            .queryParam("q", query)
+                            .queryParam("q", searchQuery)
                             .queryParam("maxResults", maxResults)
                             .build())
                     .header("Authorization", "Bearer " + accessToken)
@@ -62,6 +85,10 @@ public class GmailApiClient {
 
             for (JsonNode msgRef : messagesNode) {
                 String messageId = msgRef.path("id").asText();
+                if (isProcessedFilter != null && isProcessedFilter.test(messageId)) {
+                    log.debug("Skipping already processed Gmail message ID [{}]", messageId);
+                    continue;
+                }
                 try {
                     EmailMessageDto dto = fetchMessageDetails(accessToken, messageId);
                     if (dto != null) {
@@ -117,6 +144,7 @@ public class GmailApiClient {
                 .from(from)
                 .subject(subject)
                 .sentDate(sentDate)
+                .internalDateMs(internalDateMs)
                 .body(body)
                 .build();
     }

@@ -195,6 +195,29 @@ public class GoogleOAuthService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public Optional<Long> getLastSyncedInternalDate() {
+        return tokenRepository.findFirstByOrderByUpdatedAtDesc()
+                .map(GoogleOAuthToken::getLastSyncedInternalDate);
+    }
+
+    @Transactional
+    public void updateLastSyncedInternalDate(Long internalDateMs) {
+        if (internalDateMs == null || internalDateMs <= 0) {
+            return;
+        }
+        Optional<GoogleOAuthToken> tokenOpt = tokenRepository.findFirstByOrderByUpdatedAtDesc();
+        if (tokenOpt.isPresent()) {
+            GoogleOAuthToken token = tokenOpt.get();
+            Long current = token.getLastSyncedInternalDate();
+            if (current == null || internalDateMs > current) {
+                token.setLastSyncedInternalDate(internalDateMs);
+                tokenRepository.save(token);
+                log.info("Updated lastSyncedInternalDate to {} for user [{}]", internalDateMs, token.getEmail());
+            }
+        }
+    }
+
     @Transactional
     public void disconnect() {
         tokenRepository.deleteAll();

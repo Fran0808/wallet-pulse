@@ -6,6 +6,8 @@ import com.store.api.model.dto.email.EmailConnectionTestResponse;
 import com.store.api.model.dto.email.EmailMessageDto;
 import com.store.api.model.dto.email.EmailSyncResponse;
 import com.store.api.model.dto.email.ParsedEmailTransaction;
+import com.store.api.model.entity.ProcessedEmailMessage;
+import com.store.api.repository.ProcessedEmailMessageRepository;
 import com.store.api.service.TransactionService;
 import com.store.api.service.auth.GoogleOAuthService;
 import com.store.api.service.email.client.GmailApiClient;
@@ -33,6 +35,7 @@ public class EmailIngestionService {
     private final ImapEmailClient imapEmailClient;
     private final BankEmailParserDispatcher parserDispatcher;
     private final TransactionService transactionService;
+    private final ProcessedEmailMessageRepository processedEmailRepository;
 
     @Value("${mail.sync.batch-size:20}")
     private int batchSize;
@@ -58,7 +61,13 @@ public class EmailIngestionService {
 
         if (googleToken.isPresent()) {
             log.info("Synchronizing emails using Google Gmail REST API (OAuth2)...");
-            messages = gmailApiClient.fetchFinancialEmails(googleToken.get(), batchSize);
+            Long lastSyncedInternalDate = googleOAuthService.getLastSyncedInternalDate().orElse(null);
+            messages = gmailApiClient.fetchFinancialEmails(
+                    googleToken.get(),
+                    batchSize,
+                    lastSyncedInternalDate,
+                    processedEmailRepository::existsById
+            );
         } else {
             log.info("Synchronizing emails using IMAP fallback client...");
             messages = imapEmailClient.fetchFinancialEmails(batchSize);
@@ -67,7 +76,21 @@ public class EmailIngestionService {
         int savedCount = 0;
         List<TransactionResponse> savedTransactions = new ArrayList<>();
 
+        long maxInternalDateMs = 0L;
+
         for (EmailMessageDto msg : messages) {
+            if (msg.getInternalDateMs() != null && msg.getInternalDateMs() > maxInternalDateMs) {
+                maxInternalDateMs = msg.getInternalDateMs();
+            }
+
+            if (msg.getMessageId() != null && !processedEmailRepository.existsById(msg.getMessageId())) {
+                processedEmailRepository.save(ProcessedEmailMessage.builder()
+                        .messageId(msg.getMessageId())
+                        .internalDateMs(msg.getInternalDateMs())
+                        .subject(msg.getSubject())
+                        .build());
+            }
+
             try {
                 Optional<ParsedEmailTransaction> parsedOpt = parserDispatcher.dispatchAndParse(
                         msg.getFrom(),
@@ -95,6 +118,10 @@ public class EmailIngestionService {
             } catch (Exception ex) {
                 log.warn("Error processing email message ID [{}]: {}", msg.getMessageId(), ex.getMessage());
             }
+        }
+
+        if (maxInternalDateMs > 0) {
+            googleOAuthService.updateLastSyncedInternalDate(maxInternalDateMs);
         }
 
         log.info("Email synchronization completed: scanned={}, saved={}", scannedCount, savedCount);

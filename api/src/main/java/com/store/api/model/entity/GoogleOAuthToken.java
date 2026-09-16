@@ -32,6 +32,9 @@ public class GoogleOAuthToken {
 
     private String scope;
 
+    @Column(name = "last_synced_internal_date")
+    private Long lastSyncedInternalDate;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
