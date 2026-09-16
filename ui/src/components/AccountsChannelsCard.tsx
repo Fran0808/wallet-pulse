@@ -18,7 +18,20 @@ export const AccountsChannelsCard: React.FC<AccountsChannelsCardProps> = ({
     if (channel.includes('YAPE') || channel.includes('PLIN')) {
       return <Smartphone className="w-4 h-4 text-purple-600" />;
     }
-    return <CreditCard className="w-4 h-4 text-blue-600" />;
+    if (channel.includes('CREDITO')) {
+      return <CreditCard className="w-4 h-4 text-blue-700" />;
+    }
+    return <CreditCard className="w-4 h-4 text-sky-600" />;
+  };
+
+  const getChannelBarGradient = (channel: string) => {
+    if (channel.includes('YAPE') || channel.includes('PLIN')) {
+      return 'bg-gradient-to-r from-purple-600 to-fuchsia-500';
+    }
+    if (channel.includes('CREDITO')) {
+      return 'bg-gradient-to-r from-blue-700 to-indigo-600';
+    }
+    return 'bg-gradient-to-r from-sky-500 to-blue-500';
   };
 
   return (
@@ -27,7 +40,7 @@ export const AccountsChannelsCard: React.FC<AccountsChannelsCardProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-blue-50 text-blue-600">
+            <span className="p-2 rounded-xl bg-blue-50 text-blue-700">
               <PieChart className="w-4 h-4" />
             </span>
             <div>
@@ -69,7 +82,7 @@ export const AccountsChannelsCard: React.FC<AccountsChannelsCardProps> = ({
                 {/* Progress bar */}
                 <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                   <div
-                    className="bg-blue-600 h-1.5 rounded-full"
+                    className={`h-1.5 rounded-full transition-all duration-500 ${getChannelBarGradient(c.channel)}`}
                     style={{ width: `${Math.min(100, Math.max(5, c.percentage))}%` }}
                   />
                 </div>

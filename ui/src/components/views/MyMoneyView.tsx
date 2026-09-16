@@ -94,10 +94,10 @@ export const MyMoneyView: React.FC<MyMoneyViewProps> = ({
         </div>
 
         {/* Net Cashflow */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Flujo Neto del Mes</span>
-            <div className="h-7 w-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <div className="h-7 w-7 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
               <Wallet className="h-4 w-4" />
             </div>
           </div>
@@ -111,13 +111,13 @@ export const MyMoneyView: React.FC<MyMoneyViewProps> = ({
       </div>
 
       {/* 3. Category Breakdown Matrix */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
+      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-base font-bold text-slate-900">Distribución por Categorías</h2>
             <p className="text-xs text-slate-500">Estimación inteligente basada en patrones de consumo</p>
           </div>
-          <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
+          <span className="text-xs font-semibold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200/80">
             {categoryHighlights.length} Categorías activas
           </span>
         </div>

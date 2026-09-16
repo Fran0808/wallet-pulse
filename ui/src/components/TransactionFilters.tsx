@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, X, TrendingDown, TrendingUp, Layers, ArrowLeftRight } from 'lucide-react';
 import type { FlowType } from '../types';
 
@@ -120,11 +120,11 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
             onClick={() => onFlowTypeChange('INTERNAL_TRANSFER')}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               flowType === 'INTERNAL_TRANSFER'
-                ? 'bg-white text-blue-600 shadow-xs'
+                ? 'bg-white text-teal-700 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <ArrowLeftRight className="w-3.5 h-3.5 text-blue-600" />
+            <ArrowLeftRight className="w-3.5 h-3.5 text-teal-600" />
             <span>Transferencias</span>
           </button>
         </div>

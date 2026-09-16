@@ -15,7 +15,7 @@ export const TopMerchantsCard: React.FC<TopMerchantsCardProps> = ({ merchants, l
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-blue-50 text-blue-600">
+            <span className="p-2 rounded-xl bg-blue-50 text-blue-700">
               <Store className="w-4 h-4" />
             </span>
             <div>
@@ -51,11 +51,11 @@ export const TopMerchantsCard: React.FC<TopMerchantsCardProps> = ({ merchants, l
                 className="py-3 flex items-center justify-between hover:bg-slate-50/60 px-1 rounded-xl transition-colors group"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-blue-50 text-slate-600 group-hover:text-blue-600 flex items-center justify-center flex-shrink-0 transition-colors">
+                  <div className="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-blue-50 text-slate-600 group-hover:text-blue-700 flex items-center justify-center flex-shrink-0 transition-colors">
                     <ShoppingBag className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+                    <p className="text-xs font-bold text-slate-900 truncate group-hover:text-blue-700 transition-colors">
                       {m.merchantName || 'Consumo BCP'}
                     </p>
                     <p className="text-[10px] text-slate-400 font-medium">

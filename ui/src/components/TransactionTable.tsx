@@ -33,30 +33,30 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
     switch (channel) {
       case 'TARJETA_CREDITO_BCP':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/80">
-            <CreditCard className="w-3.5 h-3.5 text-blue-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200/80">
+            <CreditCard className="w-3.5 h-3.5 text-blue-700" />
             <span>Crédito BCP{cardLast4 ? ` **${cardLast4}` : ''}</span>
           </span>
         );
       case 'TARJETA_DEBITO_BCP':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200/80">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-50 text-sky-800 border border-sky-200/80">
             <CreditCard className="w-3.5 h-3.5 text-sky-600" />
             <span>Débito BCP{cardLast4 ? ` **${cardLast4}` : ''}</span>
           </span>
         );
       case 'YAPE':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200/80">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50 text-purple-800 border border-purple-200/80">
             <Smartphone className="w-3.5 h-3.5 text-purple-600" />
             <span>Yape</span>
           </span>
         );
       case 'BCP_TRANSFERENCIA':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/80">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
             <Building2 className="w-3.5 h-3.5 text-amber-600" />
-            <span>Transferencia</span>
+            <span>Transferencia BCP</span>
           </span>
         );
       default:
@@ -182,7 +182,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                           )}
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                          <p className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
                             {tx.contactName || 'Consumo no especificado'}
                           </p>
                           <p className="text-[11px] font-mono text-slate-400">
@@ -220,7 +220,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
 
                     {/* Action Eye */}
                     <td className="py-4 px-4 text-center whitespace-nowrap">
-                      <span className="p-1.5 rounded-lg text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-100/60 inline-flex transition-colors">
+                      <span className="p-1.5 rounded-lg text-slate-400 group-hover:text-emerald-700 group-hover:bg-emerald-50 inline-flex transition-colors">
                         <Eye className="w-4 h-4" />
                       </span>
                     </td>
