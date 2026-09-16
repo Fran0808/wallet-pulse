@@ -1,11 +1,11 @@
 import React from 'react';
 import {
-  Activity,
   CreditCard,
   Smartphone,
   ChevronRight,
   Clock,
   TrendingDown,
+  ShoppingBag,
 } from 'lucide-react';
 import type { PeriodAnalytics, Transaction, ChannelBreakdown } from '../../types';
 import { formatCurrency, formatRelativeDate } from '../../utils/formatters';
@@ -37,9 +37,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onPeriodChange,
 }) => {
   const totalOutflows = analytics?.monthlyExpense || 0;
-  const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
-  const currentDay = Math.min(new Date().getDate(), daysInMonth);
-  const burnRate = currentDay > 0 ? totalOutflows / currentDay : 0;
+  const topMerchant = analytics?.topMerchants?.[0];
+  const expenseTransactions = recentTransactions.filter((tx) => tx.flowType === 'EXPENSE');
 
   const getFriendlyChannelName = (item: ChannelBreakdown) => {
     if (item.cardLast4 && item.cardLast4.trim().length > 0) {
@@ -54,6 +53,18 @@ export const HomeView: React.FC<HomeViewProps> = ({
     if (item.channel.includes('CREDITO')) return 'BCP Crédito';
     if (item.channel.includes('DEBITO')) return 'BCP Débito';
     return item.channel.replace(/_/g, ' ');
+  };
+
+  const getTxFriendlyChannel = (tx: Transaction) => {
+    if (tx.cardLast4 && tx.cardLast4.trim().length > 0) {
+      if (tx.channel.includes('CREDITO')) return `BCP Crédito ··${tx.cardLast4}`;
+      if (tx.channel.includes('DEBITO')) return `BCP Débito ··${tx.cardLast4}`;
+      return `BCP ··${tx.cardLast4}`;
+    }
+    if (tx.channel === 'YAPE' || tx.channel.includes('YAPE')) return 'Yape';
+    if (tx.channel.includes('CREDITO')) return 'BCP Crédito';
+    if (tx.channel.includes('DEBITO')) return 'BCP Débito';
+    return tx.channel.replace(/_/g, ' ');
   };
 
   return (
@@ -123,17 +134,23 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
           {/* Clean Sub-Metrics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t lg:border-t-0 lg:border-l border-slate-800/80 pt-4 lg:pt-0 lg:pl-6">
-            {/* Burn Rate */}
-            <div className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60 min-w-[190px]">
+            {/* Top Merchant / Concentration */}
+            <div className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60 min-w-[200px]">
               <div className="flex items-center gap-1.5 text-slate-400 text-xs font-medium">
-                <Activity className="h-3.5 w-3.5 text-emerald-400" />
-                <span>Ritmo Promedio</span>
+                <ShoppingBag className="h-3.5 w-3.5 text-amber-400" />
+                <span>Mayor Consumo</span>
               </div>
-              <p className="mt-1 text-base font-bold text-white tabular-nums">
-                {loading ? '...' : `${formatCurrency(burnRate)} / día`}
+              <p className="mt-1 text-base font-bold text-white tabular-nums truncate max-w-[190px]">
+                {loading
+                  ? '...'
+                  : topMerchant
+                  ? formatCurrency(topMerchant.totalAmount)
+                  : 'S/ 0.00'}
               </p>
-              <span className="text-[11px] text-slate-400 mt-0.5 block">
-                Día {currentDay} de {daysInMonth} del mes
+              <span className="text-[11px] text-amber-300/90 mt-0.5 block truncate max-w-[190px] font-medium">
+                {topMerchant
+                  ? `${topMerchant.merchantName} (${topMerchant.percentage}% del total)`
+                  : 'Sin consumos'}
               </span>
             </div>
 
@@ -184,13 +201,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div className="py-8 text-center text-xs text-slate-400 animate-pulse">
                 Cargando movimientos recientes...
               </div>
-            ) : recentTransactions.length === 0 ? (
+            ) : expenseTransactions.length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-500">
-                No hay movimientos registrados en este período.
+                No hay consumos registrados en este período.
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
-                {recentTransactions.slice(0, 5).map((tx) => (
+                {expenseTransactions.slice(0, 5).map((tx) => (
                   <button
                     key={tx.id}
                     type="button"
@@ -206,12 +223,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                           {tx.contactName || 'Comercio'}
                         </p>
                         <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
-                          <span>{tx.channel}</span>
-                          {tx.cardLast4 && (
-                            <span className="font-mono text-[10px] bg-slate-100 px-1 py-0.2 rounded text-slate-600">
-                              ··{tx.cardLast4}
-                            </span>
-                          )}
+                          <span>{getTxFriendlyChannel(tx)}</span>
                           <span>•</span>
                           <span>{formatRelativeDate(tx.transactionDate)}</span>
                         </div>
