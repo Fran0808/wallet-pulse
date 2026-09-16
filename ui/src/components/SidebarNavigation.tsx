@@ -93,14 +93,6 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
         </nav>
       </div>
 
-      {/* 3. Footer */}
-      <div className="p-4 mx-4 mb-4 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between text-slate-400 text-xs">
-        <span className="font-semibold text-[11px] text-slate-300">WalletPulse</span>
-        <div className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-          <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">Activo</span>
-        </div>
-      </div>
     </aside>
   );
 };

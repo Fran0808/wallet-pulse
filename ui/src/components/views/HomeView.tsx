@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Activity,
-  ShieldCheck,
   CreditCard,
   Smartphone,
   ChevronRight,
@@ -41,7 +40,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
   const currentDay = Math.min(new Date().getDate(), daysInMonth);
   const burnRate = currentDay > 0 ? totalOutflows / currentDay : 0;
-  const internalTransfers = analytics?.internalTransfersAmount || 0;
 
   const getFriendlyChannelName = (item: ChannelBreakdown) => {
     if (item.cardLast4 && item.cardLast4.trim().length > 0) {
@@ -158,20 +156,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </div>
           </div>
         </div>
-
-        {/* Discreet Note for Internal Transfers Exclusion */}
-        {internalTransfers > 0 && (
-          <div className="relative z-10 mt-5 pt-3.5 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-slate-400 gap-1.5">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
-              <span>Transferencias entre tus cuentas:</span>
-              <span className="font-bold text-slate-200 tabular-nums">{formatCurrency(internalTransfers)}</span>
-            </div>
-            <span className="text-[11px] text-slate-500">
-              (Excluidas automáticamente de los gastos para no inflar tu presupuesto)
-            </span>
-          </div>
-        )}
       </div>
 
       {/* 3. Main Two-Column Layout */}
