@@ -17,6 +17,9 @@ import org.springframework.web.client.RestClient;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import com.store.api.model.entity.User;
+import com.store.api.repository.UserRepository;
+
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -28,7 +31,7 @@ public class GoogleOAuthService {
     private static final String GOOGLE_AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
     private static final String GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
     private static final String GOOGLE_USERINFO_ENDPOINT = "https://www.googleapis.com/oauth2/v2/userinfo";
-    private static final String GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email";
+    private static final String GMAIL_OAUTH_SCOPES = "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/gmail.readonly";
 
     @Value("${google.oauth.client-id:}")
     private String clientId;
@@ -40,6 +43,7 @@ public class GoogleOAuthService {
     private String redirectUri;
 
     private final GoogleOAuthTokenRepository tokenRepository;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
     private final RestClient restClient = RestClient.create();
 
@@ -52,7 +56,7 @@ public class GoogleOAuthService {
                 + "client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8)
                 + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8)
                 + "&response_type=code"
-                + "&scope=" + URLEncoder.encode(GMAIL_READONLY_SCOPE, StandardCharsets.UTF_8)
+                + "&scope=" + URLEncoder.encode(GMAIL_OAUTH_SCOPES, StandardCharsets.UTF_8)
                 + "&access_type=offline"
                 + "&prompt=consent";
     }
@@ -82,10 +86,24 @@ public class GoogleOAuthService {
             long expiresIn = json.path("expires_in").asLong(3600);
             String scope = json.path("scope").asText("");
 
-            String email = fetchUserEmail(accessToken);
+            GoogleUserProfile profile = fetchUserProfile(accessToken);
             LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(expiresIn);
 
-            Optional<GoogleOAuthToken> existingOpt = tokenRepository.findByEmail(email);
+            User user = userRepository.findByEmail(profile.email())
+                    .orElseGet(() -> {
+                        log.info("Registering new user for email: [{}]", profile.email());
+                        return User.builder()
+                                .email(profile.email())
+                                .build();
+                    });
+
+            user.setFullName(profile.name());
+            user.setPictureUrl(profile.picture());
+            user.setGoogleSubId(profile.sub());
+            user.setLastLoginAt(LocalDateTime.now());
+            User savedUser = userRepository.save(user);
+
+            Optional<GoogleOAuthToken> existingOpt = tokenRepository.findByEmail(profile.email());
             GoogleOAuthToken token;
 
             if (existingOpt.isPresent()) {
@@ -96,9 +114,11 @@ public class GoogleOAuthService {
                 }
                 token.setExpiresAt(expiresAt);
                 token.setScope(scope);
+                token.setUser(savedUser);
             } else {
                 token = GoogleOAuthToken.builder()
-                        .email(email)
+                        .user(savedUser)
+                        .email(profile.email())
                         .accessToken(accessToken)
                         .refreshToken(refreshToken)
                         .expiresAt(expiresAt)
@@ -107,7 +127,7 @@ public class GoogleOAuthService {
             }
 
             GoogleOAuthToken saved = tokenRepository.save(token);
-            log.info("Successfully saved Google OAuth token for account: [{}]", email);
+            log.info("Successfully linked User [{}] with Google OAuth token", profile.email());
             return saved;
         } catch (Exception ex) {
             log.error("Failed to parse Google OAuth token response", ex);
@@ -115,7 +135,9 @@ public class GoogleOAuthService {
         }
     }
 
-    private String fetchUserEmail(String accessToken) {
+    public record GoogleUserProfile(String email, String name, String picture, String sub) {}
+
+    private GoogleUserProfile fetchUserProfile(String accessToken) {
         try {
             String userInfoRaw = restClient.get()
                     .uri(GOOGLE_USERINFO_ENDPOINT)
@@ -124,10 +146,15 @@ public class GoogleOAuthService {
                     .body(String.class);
 
             JsonNode userInfo = objectMapper.readTree(userInfoRaw);
-            return userInfo.path("email").asText("unknown@gmail.com");
+            String email = userInfo.path("email").asText("unknown@gmail.com");
+            String name = userInfo.path("name").asText(null);
+            String picture = userInfo.path("picture").asText(null);
+            String sub = userInfo.has("id") ? userInfo.path("id").asText(null) : userInfo.path("sub").asText(null);
+
+            return new GoogleUserProfile(email, name, picture, sub);
         } catch (Exception ex) {
-            log.warn("Could not fetch user email from Google UserInfo endpoint, defaulting to unknown: {}", ex.getMessage());
-            return "unknown@gmail.com";
+            log.warn("Could not fetch user profile from Google UserInfo endpoint: {}", ex.getMessage());
+            return new GoogleUserProfile("unknown@gmail.com", null, null, null);
         }
     }
 
