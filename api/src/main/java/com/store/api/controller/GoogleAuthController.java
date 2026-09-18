@@ -1,8 +1,13 @@
 package com.store.api.controller;
 
+import com.store.api.config.security.UserContext;
 import com.store.api.model.dto.auth.GoogleAuthStatusResponse;
 import com.store.api.model.dto.auth.GoogleAuthUrlResponse;
+import com.store.api.model.dto.auth.UserResponse;
+import com.store.api.model.entity.GoogleOAuthToken;
+import com.store.api.model.entity.User;
 import com.store.api.service.auth.GoogleOAuthService;
+import com.store.api.service.auth.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +25,7 @@ import java.net.URI;
 public class GoogleAuthController {
 
     private final GoogleOAuthService googleOAuthService;
+    private final JwtService jwtService;
 
     @Value("${google.oauth.frontend-success-url:http://localhost:5173?auth=google_connected}")
     private String frontendSuccessUrl;
@@ -46,9 +52,13 @@ public class GoogleAuthController {
         }
 
         try {
-            googleOAuthService.exchangeCodeForTokens(code);
+            GoogleOAuthToken token = googleOAuthService.exchangeCodeForTokens(code);
+            String jwt = jwtService.generateToken(token.getUser());
+            String targetUrl = frontendSuccessUrl.contains("?")
+                    ? frontendSuccessUrl + "&token=" + jwt
+                    : frontendSuccessUrl + "?token=" + jwt;
             HttpHeaders headers = new HttpHeaders();
-            headers.setLocation(URI.create(frontendSuccessUrl));
+            headers.setLocation(URI.create(targetUrl));
             return new ResponseEntity<>(headers, HttpStatus.FOUND);
         } catch (Exception ex) {
             log.error("Failed to process Google OAuth callback code", ex);
@@ -56,6 +66,22 @@ public class GoogleAuthController {
             headers.setLocation(URI.create(frontendErrorUrl));
             return new ResponseEntity<>(headers, HttpStatus.FOUND);
         }
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getCurrentUser() {
+        User user = UserContext.getCurrentUser();
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(UserResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .pictureUrl(user.getPictureUrl())
+                .createdAt(user.getCreatedAt())
+                .lastLoginAt(user.getLastLoginAt())
+                .build());
     }
 
     @GetMapping("/status")
