@@ -93,3 +93,12 @@ export interface GoogleAuthStatus {
   email: string | null;
 }
 
+export interface UserProfile {
+  id: number;
+  email: string;
+  fullName: string | null;
+  pictureUrl: string | null;
+  createdAt: string;
+  lastLoginAt: string;
+}
+

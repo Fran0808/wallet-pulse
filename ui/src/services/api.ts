@@ -6,10 +6,32 @@ import type {
   EmailSyncResponse,
   EmailConnectionStatus,
   GoogleAuthStatus,
+  UserProfile,
   FlowType,
 } from '../types';
 
 const BASE_URL = '/api/v1';
+
+async function fetchWithAuth(url: string, init?: RequestInit): Promise<Response> {
+  const token = localStorage.getItem('auth_token');
+  const headers = new Headers(init?.headers || {});
+
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  const response = await fetch(url, {
+    ...init,
+    headers,
+  });
+
+  if (response.status === 401) {
+    localStorage.removeItem('auth_token');
+    window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+  }
+
+  return response;
+}
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -38,7 +60,7 @@ export interface TransactionFilterParams {
 
 export const api = {
   async getFinancialSummary(): Promise<FinancialSummary> {
-    const response = await fetch(`${BASE_URL}/analytics/summary`);
+    const response = await fetchWithAuth(`${BASE_URL}/analytics/summary`);
     return handleResponse<FinancialSummary>(response);
   },
 
@@ -48,7 +70,7 @@ export const api = {
     if (month) query.set('month', String(month));
     const qs = query.toString() ? `?${query.toString()}` : '';
 
-    const response = await fetch(`${BASE_URL}/analytics/period${qs}`);
+    const response = await fetchWithAuth(`${BASE_URL}/analytics/period${qs}`);
     return handleResponse<PeriodAnalytics>(response);
   },
 
@@ -70,19 +92,19 @@ export const api = {
       query.set('endDate', params.endDate);
     }
 
-    const response = await fetch(`${BASE_URL}/transactions?${query.toString()}`);
+    const response = await fetchWithAuth(`${BASE_URL}/transactions?${query.toString()}`);
     return handleResponse<PageResponse<Transaction>>(response);
   },
 
   async syncEmails(): Promise<EmailSyncResponse> {
-    const response = await fetch(`${BASE_URL}/emails/sync`, {
+    const response = await fetchWithAuth(`${BASE_URL}/emails/sync`, {
       method: 'POST',
     });
     return handleResponse<EmailSyncResponse>(response);
   },
 
   async testEmailConnection(): Promise<EmailConnectionStatus> {
-    const response = await fetch(`${BASE_URL}/emails/test-connection`);
+    const response = await fetchWithAuth(`${BASE_URL}/emails/test-connection`);
     return handleResponse<EmailConnectionStatus>(response);
   },
 
@@ -93,12 +115,17 @@ export const api = {
   },
 
   async getGoogleAuthStatus(): Promise<GoogleAuthStatus> {
-    const response = await fetch(`${BASE_URL}/auth/google/status`);
+    const response = await fetchWithAuth(`${BASE_URL}/auth/google/status`);
     return handleResponse<GoogleAuthStatus>(response);
   },
 
+  async getCurrentUser(): Promise<UserProfile> {
+    const response = await fetchWithAuth(`${BASE_URL}/auth/google/me`);
+    return handleResponse<UserProfile>(response);
+  },
+
   async disconnectGoogle(): Promise<void> {
-    const response = await fetch(`${BASE_URL}/auth/google/disconnect`, {
+    const response = await fetchWithAuth(`${BASE_URL}/auth/google/disconnect`, {
       method: 'POST',
     });
     if (!response.ok) {
