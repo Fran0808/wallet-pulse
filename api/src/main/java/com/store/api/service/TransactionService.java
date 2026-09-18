@@ -1,9 +1,11 @@
 package com.store.api.service;
 
+import com.store.api.config.security.UserContext;
 import com.store.api.model.dto.TransactionResponse;
 import com.store.api.model.dto.TransactionSyncRequest;
 import com.store.api.model.entity.RawNotificationLog;
 import com.store.api.model.entity.Transaction;
+import com.store.api.model.entity.User;
 import com.store.api.model.enums.FlowType;
 import com.store.api.repository.RawNotificationRepository;
 import com.store.api.repository.TransactionRepository;
@@ -43,13 +45,22 @@ public class TransactionService {
             rawNotificationRepository.save(rawLog);
         }
 
-        if (transactionRepository.existsByTransactionHash(request.getTransactionHash())) {
-            log.warn("Transaction with hash [{}] already exists. Skipping duplicate.", request.getTransactionHash());
-            Transaction existing = transactionRepository.findByTransactionHash(request.getTransactionHash()).orElseThrow();
+        User currentUser = UserContext.getCurrentUser();
+        boolean exists = (currentUser != null)
+                ? transactionRepository.existsByTransactionHashAndUser(request.getTransactionHash(), currentUser)
+                : transactionRepository.existsByTransactionHash(request.getTransactionHash());
+
+        if (exists) {
+            log.warn("Transaction with hash [{}] already exists for user [{}]. Skipping duplicate.",
+                    request.getTransactionHash(), (currentUser != null ? currentUser.getEmail() : "anonymous"));
+            Transaction existing = (currentUser != null)
+                    ? transactionRepository.findByTransactionHashAndUser(request.getTransactionHash(), currentUser).orElseThrow()
+                    : transactionRepository.findByTransactionHash(request.getTransactionHash()).orElseThrow();
             return mapToResponse(existing);
         }
 
         Transaction transaction = Transaction.builder()
+                .user(currentUser)
                 .amount(request.getAmount())
                 .flowType(request.getFlowType())
                 .contactName(request.getContactName().trim())
@@ -60,8 +71,9 @@ public class TransactionService {
                 .build();
 
         Transaction saved = transactionRepository.save(transaction);
-        log.info("Transaction saved successfully: ID={}, Amount={}, FlowType={}, Channel={}",
-                saved.getId(), saved.getAmount(), saved.getFlowType(), saved.getChannel());
+        log.info("Transaction saved successfully: ID={}, Amount={}, FlowType={}, Channel={}, User={}",
+                saved.getId(), saved.getAmount(), saved.getFlowType(), saved.getChannel(),
+                (currentUser != null ? currentUser.getEmail() : "anonymous"));
         return mapToResponse(saved);
     }
 
@@ -76,9 +88,13 @@ public class TransactionService {
 
     @Transactional(readOnly = true)
     public Page<TransactionResponse> getTransactions(LocalDateTime startDate, LocalDateTime endDate, FlowType flowType, String search, Pageable pageable) {
+        User currentUser = UserContext.getCurrentUser();
         Specification<Transaction> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            if (currentUser != null) {
+                predicates.add(cb.equal(root.get("user"), currentUser));
+            }
             if (startDate != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("transactionDate"), startDate));
             }

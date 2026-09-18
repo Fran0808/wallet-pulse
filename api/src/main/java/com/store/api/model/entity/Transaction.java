@@ -9,8 +9,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "transactions", indexes = {
-        @Index(name = "idx_tx_hash", columnList = "transaction_hash", unique = true),
-        @Index(name = "idx_tx_date", columnList = "transaction_date")
+        @Index(name = "idx_tx_hash_user", columnList = "transaction_hash, user_id", unique = true),
+        @Index(name = "idx_tx_date", columnList = "transaction_date"),
+        @Index(name = "idx_tx_user", columnList = "user_id")
 })
 @Getter
 @Setter
@@ -21,6 +22,11 @@ public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
     @Enumerated(EnumType.STRING)
@@ -36,7 +42,7 @@ public class Transaction {
     @Column(name = "transaction_date", nullable = false)
     private LocalDateTime transactionDate;
 
-    @Column(name = "transaction_hash", nullable = false, unique = true, length = 64)
+    @Column(name = "transaction_hash", nullable = false, length = 64)
     private String transactionHash;
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
