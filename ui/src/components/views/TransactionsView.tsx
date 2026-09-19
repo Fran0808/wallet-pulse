@@ -1,9 +1,8 @@
 import React from 'react';
 import { Download } from 'lucide-react';
 import type { PageResponse, Transaction } from '../../types';
-import type { TransactionFilterParams } from '../../services/api';
-import { TransactionTable } from '../TransactionTable';
-import { TransactionFilters } from '../TransactionFilters';
+import type { TransactionFilterParams } from '../../services';
+import { TransactionTable, TransactionFilters } from '../transactions';
 
 interface TransactionsViewProps {
   pageData: PageResponse<Transaction> | null;

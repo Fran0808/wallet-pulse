@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X, TrendingDown, TrendingUp, Layers, ArrowLeftRight } from 'lucide-react';
-import type { FlowType } from '../types';
+import type { FlowType } from '../../types';
 
 interface TransactionFiltersProps {
   search: string;

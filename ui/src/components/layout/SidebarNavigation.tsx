@@ -9,7 +9,7 @@ import {
   Zap,
   LogOut,
 } from 'lucide-react';
-import type { UserProfile } from '../types';
+import type { UserProfile } from '../../types';
 
 export type NavView = 'inicio' | 'mi-dinero' | 'movimientos' | 'tarjetas' | 'presupuestos' | 'configuracion';
 

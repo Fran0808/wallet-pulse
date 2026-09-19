@@ -1,6 +1,6 @@
 import React from 'react';
 import { CreditCard, PieChart, Settings, Sparkles, ArrowRight } from 'lucide-react';
-import type { NavView } from '../SidebarNavigation';
+import type { NavView } from '../layout';
 
 interface PlaceholderViewProps {
   view: NavView;

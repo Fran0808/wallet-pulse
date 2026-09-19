@@ -3,8 +3,8 @@ import {
   Calendar,
   CreditCard,
 } from 'lucide-react';
-import type { PeriodAnalytics } from '../types';
-import { formatCurrency, formatDate, getChannelLabel } from '../utils/formatters';
+import type { PeriodAnalytics } from '../../types';
+import { formatCurrency, formatDate, getChannelLabel } from '../../utils';
 
 interface CleverHeroBannerProps {
   analytics: PeriodAnalytics | null;

@@ -1,7 +1,7 @@
-﻿import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X, Copy, Check, ShieldCheck, CreditCard, Calendar, Hash } from 'lucide-react';
-import type { Transaction } from '../types';
-import { formatCurrency, formatDate, getChannelLabel } from '../utils/formatters';
+import type { Transaction } from '../../types';
+import { formatCurrency, formatDate, getChannelLabel } from '../../utils';
 
 interface TransactionDetailModalProps {
   transaction: Transaction | null;

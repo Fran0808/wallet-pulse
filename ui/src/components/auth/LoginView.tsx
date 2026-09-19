@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts';
 import { Zap, ShieldCheck, ArrowRight, Loader2, Sparkles, Receipt, BellRing } from 'lucide-react';
 
 export const LoginView: React.FC = () => {

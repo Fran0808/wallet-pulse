@@ -11,8 +11,8 @@ import {
   Receipt,
   Eye,
 } from 'lucide-react';
-import type { Transaction, PageResponse } from '../types';
-import { formatCurrency, formatDate, getChannelLabel } from '../utils/formatters';
+import type { Transaction, PageResponse } from '../../types';
+import { formatCurrency, formatDate, getChannelLabel } from '../../utils';
 
 interface TransactionTableProps {
   pageData: PageResponse<Transaction> | null;

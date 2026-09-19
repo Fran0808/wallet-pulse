@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { LogOut, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { api } from '../services/api';
-import type { GoogleAuthStatus } from '../types';
+import { api } from '../../services';
+import type { GoogleAuthStatus } from '../../types';
 
 interface HeaderPulseProps {
   error?: string | null;

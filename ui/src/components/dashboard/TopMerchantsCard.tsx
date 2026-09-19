@@ -1,7 +1,7 @@
 import React from 'react';
 import { Store, ShoppingBag, ChevronRight } from 'lucide-react';
-import type { TopMerchant } from '../types';
-import { formatCurrency } from '../utils/formatters';
+import type { TopMerchant } from '../../types';
+import { formatCurrency } from '../../utils';
 
 interface TopMerchantsCardProps {
   merchants: TopMerchant[];

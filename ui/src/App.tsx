@@ -1,14 +1,11 @@
 import { useState } from 'react';
-import { SidebarNavigation } from './components/SidebarNavigation';
-import type { NavView } from './components/SidebarNavigation';
-import { HomeView } from './components/views/HomeView';
-import { MyMoneyView } from './components/views/MyMoneyView';
-import { TransactionsView } from './components/views/TransactionsView';
-import { PlaceholderView } from './components/views/PlaceholderView';
-import { TransactionDetailModal } from './components/TransactionDetailModal';
-import { LoginView } from './components/auth/LoginView';
-import { useAuth } from './contexts/AuthContext';
-import { useFinance } from './hooks/useFinance';
+import { SidebarNavigation } from './components/layout';
+import type { NavView } from './components/layout';
+import { HomeView, MyMoneyView, TransactionsView, PlaceholderView } from './components/views';
+import { TransactionDetailModal } from './components/transactions';
+import { LoginView } from './components/auth';
+import { useAuth } from './contexts';
+import { useFinance } from './hooks';
 import type { Transaction } from './types';
 import { Menu, X, LogOut, Loader2 } from 'lucide-react';
 

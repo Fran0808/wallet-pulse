@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Layers, Smartphone, CreditCard, ShieldCheck } from 'lucide-react';
-import type { ChannelBreakdown } from '../types';
-import { formatCurrency, getChannelLabel } from '../utils/formatters';
+import type { ChannelBreakdown } from '../../types';
+import { formatCurrency, getChannelLabel } from '../../utils';
 
 interface ChannelsMultiRingChartProps {
   channels: ChannelBreakdown[];

@@ -1,7 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import { TrendingUp, TrendingDown, Scale, ReceiptText } from 'lucide-react';
-import type { FinancialSummary } from '../types';
-import { formatCurrency } from '../utils/formatters';
+import type { FinancialSummary } from '../../types';
+import { formatCurrency } from '../../utils';
 
 interface FinancialSummaryCardsProps {
   summary: FinancialSummary | null;

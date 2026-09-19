@@ -7,12 +7,10 @@ import {
   Gamepad2,
 } from 'lucide-react';
 import type { PeriodAnalytics } from '../../types';
-import { formatCurrency } from '../../utils/formatters';
-import { TopMerchantsCard } from '../TopMerchantsCard';
-import { AccountsChannelsCard } from '../AccountsChannelsCard';
-import { CategoryDonutChart } from '../CategoryDonutChart';
-import type { CategoryItem } from '../CategoryDonutChart';
-import { ChannelsMultiRingChart } from '../ChannelsMultiRingChart';
+import { formatCurrency } from '../../utils';
+import { TopMerchantsCard, AccountsChannelsCard } from '../dashboard';
+import { CategoryDonutChart, ChannelsMultiRingChart } from '../charts';
+import type { CategoryItem } from '../charts';
 
 interface MyMoneyViewProps {
   analytics: PeriodAnalytics | null;

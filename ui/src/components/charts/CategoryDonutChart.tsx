@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PieChart } from 'lucide-react';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency } from '../../utils';
 
 export interface CategoryItem {
   id: string;

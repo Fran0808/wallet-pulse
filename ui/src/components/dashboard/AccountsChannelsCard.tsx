@@ -1,7 +1,7 @@
 import React from 'react';
 import { CreditCard, Smartphone, ShieldCheck, PieChart } from 'lucide-react';
-import type { ChannelBreakdown } from '../types';
-import { formatCurrency, getChannelLabel } from '../utils/formatters';
+import type { ChannelBreakdown } from '../../types';
+import { formatCurrency, getChannelLabel } from '../../utils';
 
 interface AccountsChannelsCardProps {
   channels: ChannelBreakdown[];
