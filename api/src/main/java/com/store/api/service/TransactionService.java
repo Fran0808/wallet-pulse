@@ -9,6 +9,7 @@ import com.store.api.model.entity.User;
 import com.store.api.model.enums.FlowType;
 import com.store.api.repository.RawNotificationRepository;
 import com.store.api.repository.TransactionRepository;
+import com.store.api.repository.UserRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final RawNotificationRepository rawNotificationRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public TransactionResponse processAndSave(TransactionSyncRequest request) {
@@ -46,6 +48,9 @@ public class TransactionService {
         }
 
         User currentUser = UserContext.getCurrentUser();
+        if (currentUser == null) {
+            currentUser = userRepository.findById(1L).orElse(null);
+        }
         boolean exists = (currentUser != null)
                 ? transactionRepository.existsByTransactionHashAndUser(request.getTransactionHash(), currentUser)
                 : transactionRepository.existsByTransactionHash(request.getTransactionHash());
