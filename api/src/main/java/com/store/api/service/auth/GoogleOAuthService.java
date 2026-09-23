@@ -223,6 +223,12 @@ public class GoogleOAuthService {
     }
 
     @Transactional(readOnly = true)
+    public Optional<User> getConnectedUser() {
+        return tokenRepository.findFirstByOrderByUpdatedAtDesc()
+                .map(GoogleOAuthToken::getUser);
+    }
+
+    @Transactional(readOnly = true)
     public Optional<Long> getLastSyncedInternalDate() {
         return tokenRepository.findFirstByOrderByUpdatedAtDesc()
                 .map(GoogleOAuthToken::getLastSyncedInternalDate);

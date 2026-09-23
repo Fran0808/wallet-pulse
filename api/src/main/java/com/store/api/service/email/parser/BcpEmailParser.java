@@ -53,8 +53,8 @@ public class BcpEmailParser implements BankEmailParser {
         String cleanSubject = subject != null ? subject.toLowerCase() : "";
 
         return cleanSender.contains("notificacionesbcp.com.pe") ||
-                (cleanSender.contains("bcp") && !cleanSender.contains("yape")) ||
-                (cleanSubject.contains("bcp") && !cleanSubject.contains("yape"));
+                cleanSender.contains("bcp") ||
+                cleanSubject.contains("bcp");
     }
 
     @Override
@@ -72,7 +72,7 @@ public class BcpEmailParser implements BankEmailParser {
         }
 
         // 1. Determine Channel
-        String channel = determineChannel(combined);
+        String channel = determineChannel(subject, combined);
 
         // 2. Extract Amount and Currency
         BigDecimal amount = null;
@@ -101,21 +101,38 @@ public class BcpEmailParser implements BankEmailParser {
             return null;
         }
 
+        String lowerCombined = combined.toLowerCase();
+
         // 3. Extract Merchant / Recipient
         String merchant = "Consumo BCP";
-        Matcher merchantMatcher = MERCHANT_PATTERN.matcher(cleanText);
-        if (merchantMatcher.find()) {
-            String found = merchantMatcher.group(1).replaceAll("[.,;:]+$", "").trim();
-            if (found.length() >= 3 && !found.equalsIgnoreCase("bcp")) {
-                merchant = found;
+
+        if (lowerCombined.contains("recibiste un yapeo") || lowerCombined.contains("yapeo a celular")) {
+            Matcher yapeoDeMatcher = Pattern.compile("(?:recibiste un yapeo de\\s+[^\\s]+\\s+[0-9.,]+\\s+de|enviado por):?\\s*([A-Za-z0-9À-ÿ\\s.,&'-]+?)(?=\\s*(?:\\.|por tu seguridad|¿no reconoces|$))", Pattern.CASE_INSENSITIVE).matcher(cleanText);
+            if (yapeoDeMatcher.find()) {
+                merchant = yapeoDeMatcher.group(1).trim();
+            } else {
+                merchant = "Yape Recibido";
             }
-        }
-        if ("Consumo BCP".equals(merchant)) {
-            Matcher enMatcher = CONSUMO_EN_PATTERN.matcher(cleanText);
-            if (enMatcher.find()) {
-                String found = enMatcher.group(1).replaceAll("[.,;:]+$", "").trim();
-                if (found.length() >= 3 && !found.equalsIgnoreCase("bcp")) {
-                    merchant = found;
+        } else {
+            Matcher empresaMatcher = Pattern.compile("empresa:?\\s*([A-Za-z0-9À-ÿ\\s.,&'-]+?)(?=\\s*(?:servicio|titular|código|cuenta|monto|$))", Pattern.CASE_INSENSITIVE).matcher(cleanText);
+            if (empresaMatcher.find()) {
+                merchant = empresaMatcher.group(1).trim();
+            } else {
+                Matcher merchantMatcher = MERCHANT_PATTERN.matcher(cleanText);
+                if (merchantMatcher.find()) {
+                    String found = merchantMatcher.group(1).replaceAll("[.,;:]+$", "").trim();
+                    if (found.length() >= 3 && !found.equalsIgnoreCase("bcp")) {
+                        merchant = found;
+                    }
+                }
+                if ("Consumo BCP".equals(merchant)) {
+                    Matcher enMatcher = CONSUMO_EN_PATTERN.matcher(cleanText);
+                    if (enMatcher.find()) {
+                        String found = enMatcher.group(1).replaceAll("[.,;:]+$", "").trim();
+                        if (found.length() >= 3 && !found.equalsIgnoreCase("bcp")) {
+                            merchant = found;
+                        }
+                    }
                 }
             }
         }
@@ -136,11 +153,10 @@ public class BcpEmailParser implements BankEmailParser {
 
         // 6. FlowType (Default is EXPENSE for cards/consumption, check if internal transfer or income)
         FlowType flowType = FlowType.EXPENSE;
-        String lowerCombined = combined.toLowerCase();
 
         if (lowerCombined.contains("entre mis cuentas") || lowerCombined.contains("transferencia propia") || lowerCombined.contains("transferencia entre cuentas")) {
             flowType = FlowType.INTERNAL_TRANSFER;
-        } else if (lowerCombined.contains("te envió") || lowerCombined.contains("te yapeó") || lowerCombined.contains("abono")) {
+        } else if (lowerCombined.contains("te envió") || lowerCombined.contains("te yapeó") || lowerCombined.contains("recibiste un yapeo") || lowerCombined.contains("recepción de yapeo") || lowerCombined.contains("abono")) {
             flowType = FlowType.INCOME;
         }
 
@@ -172,13 +188,21 @@ public class BcpEmailParser implements BankEmailParser {
         }
     }
 
-    private String determineChannel(String text) {
+    private String determineChannel(String subject, String text) {
+        String lowerSubject = (subject != null ? subject : "").toLowerCase();
         String lower = text.toLowerCase();
-        if (lower.contains("crédito") || lower.contains("credito")) {
+
+        if (lowerSubject.contains("yape") || lowerSubject.contains("yapeo") || lower.contains("yapeo a celular") || lower.contains("recibiste un yapeo")) {
+            return ChannelType.YAPE.name();
+        } else if (lowerSubject.contains("crédito") || lowerSubject.contains("credito")) {
             return ChannelType.TARJETA_CREDITO_BCP.name();
-        } else if (lower.contains("débito") || lower.contains("debito")) {
+        } else if (lowerSubject.contains("débito") || lowerSubject.contains("debito")) {
             return ChannelType.TARJETA_DEBITO_BCP.name();
-        } else if (lower.contains("yape")) {
+        } else if (lower.contains("tarjeta de crédito") || lower.contains("tarjeta de credito")) {
+            return ChannelType.TARJETA_CREDITO_BCP.name();
+        } else if (lower.contains("tarjeta de débito") || lower.contains("tarjeta de debito")) {
+            return ChannelType.TARJETA_DEBITO_BCP.name();
+        } else if (lower.contains("yape") || lower.contains("yapeo")) {
             return ChannelType.YAPE.name();
         }
         return ChannelType.BCP_TRANSFERENCIA.name();
