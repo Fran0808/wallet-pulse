@@ -2,6 +2,7 @@ import React from 'react';
 import {
   CreditCard,
   Smartphone,
+  Building2,
   ChevronRight,
   Clock,
   TrendingDown,
@@ -59,6 +60,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     if (tx.cardLast4 && tx.cardLast4.trim().length > 0) {
       if (tx.channel.includes('CREDITO')) return `BCP Crédito ··${tx.cardLast4}`;
       if (tx.channel.includes('DEBITO')) return `BCP Débito ··${tx.cardLast4}`;
+      if (tx.channel.includes('TRANSFERENCIA') || tx.channel.includes('AHORRO')) return `BCP Cuenta ··${tx.cardLast4}`;
       return `BCP ··${tx.cardLast4}`;
     }
     if (tx.channel === 'YAPE' || tx.channel.includes('YAPE')) return 'Yape';
@@ -261,17 +263,21 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 {analytics.channelBreakdown.map((item, index) => {
                   const isYape = item.channel.includes('YAPE') || item.channel.includes('PLIN');
                   const isCredito = item.channel.includes('CREDITO');
+                  const isCuenta = item.channel.includes('TRANSFERENCIA') || item.channel.includes('AHORRO');
                   const friendlyName = getFriendlyChannelName(item);
 
                   // Authentic Peruvian financial brand colors:
                   // Yape: Purple #742284 / fuchsia
                   // BCP Crédito: Deep Royal Blue #002A8F
                   // BCP Débito: Sky / Cyan #0077C8
-                  const iconColor = isYape ? 'text-purple-600' : isCredito ? 'text-blue-700' : 'text-sky-600';
+                  // BCP Cuenta: Emerald / Teal
+                  const iconColor = isYape ? 'text-purple-600' : isCredito ? 'text-blue-700' : isCuenta ? 'text-emerald-600' : 'text-sky-600';
                   const barGradient = isYape
                     ? 'bg-gradient-to-r from-purple-600 to-fuchsia-500'
                     : isCredito
                     ? 'bg-gradient-to-r from-blue-700 to-indigo-600'
+                    : isCuenta
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-500'
                     : 'bg-gradient-to-r from-sky-500 to-blue-500';
 
                   return (
@@ -283,6 +289,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         <span className="font-bold text-slate-800 flex items-center gap-2">
                           {isYape ? (
                             <Smartphone className={`h-4 w-4 ${iconColor}`} />
+                          ) : isCuenta ? (
+                            <Building2 className={`h-4 w-4 ${iconColor}`} />
                           ) : (
                             <CreditCard className={`h-4 w-4 ${iconColor}`} />
                           )}

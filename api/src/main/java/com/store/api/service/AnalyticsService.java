@@ -82,6 +82,8 @@ public class AnalyticsService {
                     displayName = "BCP Crédito **" + cardLast4;
                 } else if (channel != null && channel.contains("DEBITO")) {
                     displayName = "BCP Débito **" + cardLast4;
+                } else if (channel != null && (channel.contains("TRANSFERENCIA") || channel.contains("AHORRO"))) {
+                    displayName = "BCP Cuenta **" + cardLast4;
                 } else {
                     displayName = "BCP **" + cardLast4;
                 }
