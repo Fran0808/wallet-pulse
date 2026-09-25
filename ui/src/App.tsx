@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SidebarNavigation } from './components/layout';
+import { SidebarNavigation, PeriodSelector } from './components/layout';
 import type { NavView } from './components/layout';
 import { HomeView, MyMoneyView, TransactionsView, PlaceholderView } from './components/views';
 import { TransactionDetailModal } from './components/transactions';
@@ -7,7 +7,16 @@ import { LoginView } from './components/auth';
 import { useAuth } from './contexts';
 import { useFinance } from './hooks';
 import type { Transaction } from './types';
-import { Menu, X, LogOut, Loader2 } from 'lucide-react';
+import { LogOut, Menu, X, Loader2 } from 'lucide-react';
+
+const VIEW_LABELS: Record<NavView, string> = {
+  inicio: 'Inicio',
+  'mi-dinero': 'Mi dinero',
+  movimientos: 'Movimientos',
+  tarjetas: 'Tarjetas y cuentas',
+  presupuestos: 'Presupuestos',
+  configuracion: 'Configuración',
+};
 
 export function App() {
   const { user, loading: loadingAuth, logout } = useAuth();
@@ -26,129 +35,95 @@ export function App() {
 
   const [activeView, setActiveView] = useState<NavView>('inicio');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (loadingAuth) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4 text-slate-200">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-        <p className="text-sm font-medium text-slate-400">Verificando sesión...</p>
+      <div className="flex min-h-screen items-center justify-center gap-3 bg-canvas text-muted">
+        <Loader2 className="h-5 w-5 animate-spin text-brand" />
+        <p className="text-sm">Verificando sesión...</p>
       </div>
     );
   }
 
-  if (!user) {
-    return <LoginView />;
-  }
+  if (!user) return <LoginView />;
 
   return (
-    <div className="min-h-screen bg-slate-50/70 text-slate-900 flex font-sans selection:bg-blue-500/20">
-      {/* 1. Mobile Sidebar Backdrop Drawer */}
+    <div className="flex min-h-screen bg-canvas text-ink">
       {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm lg:hidden transition-opacity"
+        <button
+          type="button"
+          aria-label="Cerrar menú"
+          className="fixed inset-0 z-40 bg-ink/40 lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      {/* 2. Sidebar Navigation (FEAT-001) */}
-      <div
-        className={`fixed inset-y-0 left-0 z-50 transform lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out flex ${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
+      <div className={`fixed inset-y-0 left-0 z-50 flex transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <SidebarNavigation
           activeView={activeView}
           onViewChange={(view) => {
             setActiveView(view);
             setMobileMenuOpen(false);
           }}
-          user={user}
-          onLogout={logout}
         />
       </div>
 
-      {/* 3. Main Application Container (FEAT-002) */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Navbar */}
-        <header className="h-16 shrink-0 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between z-10">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
-              aria-label="Abrir menú"
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:inline-block">
-              {activeView === 'inicio'
-                ? 'Tablero de Control'
-                : activeView === 'mi-dinero'
-                ? 'Centro Analítico'
-                : activeView === 'movimientos'
-                ? 'Libro de Transacciones'
-                : 'Módulo del Sistema'}
-            </span>
-          </div>
-
-          {/* Right Header Badges & User Profile */}
-          <div className="flex items-center gap-3">
-            {error && (
-              <span className="text-xs font-medium text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-100">
-                {error}
-              </span>
-            )}
-
-            <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200/80">
-              {user.pictureUrl ? (
-                <img
-                  src={user.pictureUrl}
-                  alt={user.fullName || user.email}
-                  className="h-8 w-8 rounded-full border border-slate-200 object-cover shadow-xs"
-                />
-              ) : (
-                <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center border border-blue-200">
-                  {user.fullName ? user.fullName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
-                </div>
-              )}
-
-              <div className="hidden sm:flex flex-col text-left">
-                <span className="text-xs font-semibold text-slate-800 leading-tight">
-                  {user.fullName || user.email.split('@')[0]}
-                </span>
-                <span className="text-[11px] text-slate-400 leading-tight truncate max-w-[140px]">
-                  {user.email}
-                </span>
-              </div>
-
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="border-b border-line bg-white">
+          <div className="mx-auto flex min-h-20 max-w-[1440px] flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-8 lg:px-10">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={logout}
-                title="Cerrar sesión"
-                className="p-1.5 ml-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+                className="rounded-lg p-2 text-ink hover:bg-canvas lg:hidden"
               >
-                <LogOut className="h-4 w-4" />
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
+              <div>
+                <p className="eyebrow">WalletPulse</p>
+                <p className="font-display text-lg font-semibold leading-tight">{VIEW_LABELS[activeView]}</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 sm:gap-5">
+              <PeriodSelector
+                year={selectedPeriod.year}
+                month={selectedPeriod.month}
+                onChange={(year, month) => setSelectedPeriod({ year, month })}
+              />
+              <div className="hidden h-8 w-px bg-line sm:block" />
+              <div className="flex items-center gap-2.5">
+                {user.pictureUrl ? (
+                  <img src={user.pictureUrl} alt="" className="h-9 w-9 rounded-full border border-line object-cover" />
+                ) : (
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-sm font-semibold text-brand">
+                    {(user.fullName || user.email).charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="hidden max-w-36 truncate text-sm font-medium md:block">{user.fullName || user.email}</span>
+                <button type="button" onClick={logout} aria-label="Cerrar sesión" title="Cerrar sesión" className="rounded-lg p-2 text-muted hover:bg-canvas hover:text-ink">
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
         </header>
 
-        {/* Scrollable View Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-8 max-w-7xl w-full mx-auto">
+        <main className="mx-auto w-full max-w-[1440px] flex-1 px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+          {error && <p role="alert" className="mb-6 rounded-xl border border-negative/20 bg-negative/5 px-4 py-3 text-sm text-negative">{error}</p>}
           {activeView === 'inicio' && (
             <HomeView
               analytics={periodAnalytics}
               recentTransactions={transactionsPage?.content || []}
               loading={loadingSummary || loadingTransactions}
               onNavigateToTransactions={() => setActiveView('movimientos')}
-              onSelectTransaction={(tx) => setSelectedTransaction(tx)}
+              onSelectTransaction={setSelectedTransaction}
               selectedYear={selectedPeriod.year}
               selectedMonth={selectedPeriod.month}
-              onPeriodChange={(year, month) => setSelectedPeriod({ year, month })}
             />
           )}
-
           {activeView === 'mi-dinero' && (
             <MyMoneyView
               analytics={periodAnalytics}
@@ -157,7 +132,6 @@ export function App() {
               selectedMonth={selectedPeriod.month}
             />
           )}
-
           {activeView === 'movimientos' && (
             <TransactionsView
               pageData={transactionsPage}
@@ -165,25 +139,17 @@ export function App() {
               filters={filters}
               onFilterChange={handleFilterChange}
               onPageChange={handlePageChange}
-              onSelectTransaction={(tx) => setSelectedTransaction(tx)}
-              periodName={periodAnalytics ? `${periodAnalytics.periodName} ${selectedPeriod.year}` : undefined}
+              onSelectTransaction={setSelectedTransaction}
+              periodName={`${selectedPeriod.month.toString().padStart(2, '0')}/${selectedPeriod.year}`}
             />
           )}
-
           {['tarjetas', 'presupuestos', 'configuracion'].includes(activeView) && (
-            <PlaceholderView
-              view={activeView}
-              onNavigateHome={() => setActiveView('inicio')}
-            />
+            <PlaceholderView view={activeView} onNavigateHome={() => setActiveView('inicio')} />
           )}
         </main>
       </div>
 
-      {/* 4. Native Accessible Transaction Detail Dialog */}
-      <TransactionDetailModal
-        transaction={selectedTransaction}
-        onClose={() => setSelectedTransaction(null)}
-      />
+      <TransactionDetailModal transaction={selectedTransaction} onClose={() => setSelectedTransaction(null)} />
     </div>
   );
 }
