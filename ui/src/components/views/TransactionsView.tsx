@@ -1,4 +1,3 @@
-import React from 'react';
 import { Download } from 'lucide-react';
 import type { PageResponse, Transaction } from '../../types';
 import type { TransactionFilterParams } from '../../services';
@@ -10,11 +9,11 @@ interface TransactionsViewProps {
   filters: TransactionFilterParams;
   onFilterChange: (filters: Partial<TransactionFilterParams>) => void;
   onPageChange: (newPage: number) => void;
-  onSelectTransaction: (tx: Transaction) => void;
+  onSelectTransaction: (transaction: Transaction) => void;
   periodName?: string;
 }
 
-export const TransactionsView: React.FC<TransactionsViewProps> = ({
+export function TransactionsView({
   pageData,
   loading,
   filters,
@@ -22,68 +21,60 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   onPageChange,
   onSelectTransaction,
   periodName,
-}) => {
+}: TransactionsViewProps) {
   const exportToCSV = () => {
-    if (!pageData || !pageData.content.length) return;
+    if (!pageData?.content.length) return;
     const headers = ['ID', 'Fecha', 'Comercio', 'Monto', 'Tipo', 'Canal', 'Tarjeta', 'Hash'];
-    const rows = pageData.content.map((tx) => [
-      tx.id,
-      tx.transactionDate,
-      `"${tx.contactName?.replace(/"/g, '""') || ''}"`,
-      tx.amount,
-      tx.flowType,
-      tx.channel,
-      tx.cardLast4 || '',
-      tx.transactionHash,
+    const rows = pageData.content.map((transaction) => [
+      transaction.id,
+      transaction.transactionDate,
+      transaction.contactName,
+      transaction.amount,
+      transaction.flowType,
+      transaction.channel,
+      transaction.cardLast4 || '',
+      transaction.transactionHash,
     ]);
-
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    const escapeCell = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
+    const csvContent = [headers, ...rows].map((row) => row.map(escapeCell).join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob(['\uFEFF', csvContent], { type: 'text/csv;charset=utf-8;' }));
     const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `walletpulse_movimientos_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.href = url;
+    link.download = `walletpulse_movimientos_${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    link.remove();
+    URL.revokeObjectURL(url);
   };
 
   return (
     <div className="space-y-6">
-      {/* 1. Header & Actions Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Movimientos Confirmados</h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Registro detallado de transacciones extraídas de correos bancarios y notificaciones.
-          </p>
+          <p className="eyebrow">Historial del período</p>
+          <h1 className="font-display mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Movimientos</h1>
+          <p className="mt-2 text-sm text-muted">Consulta las entradas, los gastos y las transferencias registradas.</p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={exportToCSV}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200/80 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition-all active:scale-[0.98]"
-          >
-            <Download className="h-3.5 w-3.5 text-slate-500" />
-            <span>Exportar CSV</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={exportToCSV}
+          disabled={!pageData?.content.length}
+          className="inline-flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" /> Exportar página CSV
+        </button>
       </div>
 
-      {/* 2. Filters Component */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm">
-        <TransactionFilters
-          search={filters.search || ''}
-          flowType={filters.flowType || ''}
-          onSearchChange={(search) => onFilterChange({ search })}
-          onFlowTypeChange={(flowType) => onFilterChange({ flowType })}
-          onReset={() => onFilterChange({ search: '', flowType: '' })}
-        />
-      </div>
-
-      {/* 3. Paginated Interactive Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden p-6">
+      <section className="surface overflow-hidden" aria-label="Listado de movimientos">
+        <div className="border-b border-line px-5 py-5 sm:px-6">
+          <TransactionFilters
+            search={filters.search || ''}
+            flowType={filters.flowType || ''}
+            onSearchChange={(search) => onFilterChange({ search })}
+            onFlowTypeChange={(flowType) => onFilterChange({ flowType })}
+            onReset={() => onFilterChange({ search: '', flowType: '' })}
+          />
+        </div>
         <TransactionTable
           pageData={pageData}
           loading={loading}
@@ -91,7 +82,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
           onPageChange={onPageChange}
           onSelectTransaction={onSelectTransaction}
         />
-      </div>
+      </section>
     </div>
   );
-};
+}

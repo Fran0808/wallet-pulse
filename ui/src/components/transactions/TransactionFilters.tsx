@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, X, TrendingDown, TrendingUp, Layers, ArrowLeftRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Search, X } from 'lucide-react';
 import type { FlowType } from '../../types';
 
 interface TransactionFiltersProps {
@@ -10,139 +10,58 @@ interface TransactionFiltersProps {
   onReset: () => void;
 }
 
-export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
-  search,
-  flowType,
-  onSearchChange,
-  onFlowTypeChange,
-  onReset,
-}) => {
-  // Local state for immediate typing responsiveness
+const FLOW_OPTIONS: { value: FlowType | ''; label: string }[] = [
+  { value: '', label: 'Todos' },
+  { value: 'EXPENSE', label: 'Gastos' },
+  { value: 'INCOME', label: 'Entradas' },
+  { value: 'INTERNAL_TRANSFER', label: 'Transferencias' },
+];
+
+export function TransactionFilters({ search, flowType, onSearchChange, onFlowTypeChange, onReset }: TransactionFiltersProps) {
   const [localSearch, setLocalSearch] = useState(search);
 
-  // Sync when search prop changes externally (e.g. onReset)
   useEffect(() => {
-    setLocalSearch(search);
-  }, [search]);
-
-  // Debounce search query by 300ms to avoid flashing requests
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (localSearch !== search) {
-        onSearchChange(localSearch);
-      }
+    const timer = setTimeout(() => {
+      if (localSearch !== search) onSearchChange(localSearch);
     }, 300);
-
-    return () => clearTimeout(handler);
+    return () => clearTimeout(timer);
   }, [localSearch, search, onSearchChange]);
 
-  const hasActiveFilters = Boolean(localSearch.trim() || flowType);
-
-  const handleClear = () => {
-    setLocalSearch('');
-    onSearchChange('');
-  };
-
   return (
-    <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      {/* 1. Search Input with Debounce */}
-      <div className="relative flex-1 max-w-md">
-        <label htmlFor="search-input" className="sr-only">
-          Buscar por comercio o contacto
-        </label>
-        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-          <Search className="h-4 w-4 text-slate-400" />
-        </div>
+    <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+      <div className="relative w-full xl:max-w-sm">
+        <label htmlFor="transaction-search" className="sr-only">Buscar por comercio o contacto</label>
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
         <input
-          id="search-input"
-          type="text"
+          id="transaction-search"
+          type="search"
           value={localSearch}
-          onChange={(e) => setLocalSearch(e.target.value)}
-          placeholder="Buscar por comercio, contacto o servicio..."
-          className="block w-full pl-10 pr-10 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all"
+          onChange={(event) => setLocalSearch(event.target.value)}
+          placeholder="Buscar comercio o contacto"
+          className="w-full rounded-xl border border-line bg-canvas py-2.5 pl-10 pr-10 text-sm text-ink placeholder:text-muted focus:border-brand focus:bg-white focus:outline-none"
         />
         {localSearch && (
-          <button
-            type="button"
-            onClick={handleClear}
-            aria-label="Limpiar búsqueda"
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
-          >
+          <button type="button" onClick={() => { setLocalSearch(''); onSearchChange(''); }} aria-label="Limpiar búsqueda" className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1 text-muted hover:text-ink">
             <X className="h-4 w-4" />
           </button>
         )}
       </div>
-
-      {/* 2. Flow Type Segmented Control */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200/80 flex-wrap">
+      <div className="flex flex-wrap items-center gap-2" aria-label="Filtrar por tipo de movimiento">
+        {FLOW_OPTIONS.map((option) => (
           <button
+            key={option.value}
             type="button"
-            onClick={() => onFlowTypeChange('')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              flowType === ''
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
+            onClick={() => onFlowTypeChange(option.value)}
+            aria-pressed={flowType === option.value}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${flowType === option.value ? 'bg-brand text-white' : 'text-muted hover:bg-canvas hover:text-ink'}`}
           >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Todos</span>
+            {option.label}
           </button>
-
-          <button
-            type="button"
-            onClick={() => onFlowTypeChange('EXPENSE')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              flowType === 'EXPENSE'
-                ? 'bg-white text-rose-600 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <TrendingDown className="w-3.5 h-3.5 text-rose-600" />
-            <span>Gastos</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onFlowTypeChange('INCOME')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              flowType === 'INCOME'
-                ? 'bg-white text-emerald-600 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Ingresos</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onFlowTypeChange('INTERNAL_TRANSFER')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              flowType === 'INTERNAL_TRANSFER'
-                ? 'bg-white text-teal-700 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <ArrowLeftRight className="w-3.5 h-3.5 text-teal-600" />
-            <span>Transferencias</span>
-          </button>
-        </div>
-
-        {/* Clear All Button */}
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={() => {
-              setLocalSearch('');
-              onReset();
-            }}
-            className="text-xs text-slate-500 hover:text-slate-800 font-medium px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-          >
-            Limpiar filtros
-          </button>
+        ))}
+        {(localSearch.trim() || flowType) && (
+          <button type="button" onClick={() => { setLocalSearch(''); onReset(); }} className="px-2 py-2 text-sm text-muted hover:text-ink">Limpiar</button>
         )}
       </div>
     </div>
   );
-};
+}

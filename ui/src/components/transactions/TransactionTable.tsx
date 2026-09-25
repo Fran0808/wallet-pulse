@@ -1,16 +1,4 @@
-import React from 'react';
-import {
-  CreditCard,
-  Smartphone,
-  Building2,
-  ArrowUpRight,
-  ArrowDownLeft,
-  ArrowLeftRight,
-  ChevronLeft,
-  ChevronRight,
-  Receipt,
-  Eye,
-} from 'lucide-react';
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Transaction, PageResponse } from '../../types';
 import { formatCurrency, formatDate, getChannelLabel } from '../../utils';
 
@@ -18,254 +6,81 @@ interface TransactionTableProps {
   pageData: PageResponse<Transaction> | null;
   loading: boolean;
   periodName?: string;
-  onPageChange: (newPage: number) => void;
-  onSelectTransaction: (tx: Transaction) => void;
+  onPageChange: (page: number) => void;
+  onSelectTransaction: (transaction: Transaction) => void;
 }
 
-export const TransactionTable: React.FC<TransactionTableProps> = ({
-  pageData,
-  loading,
-  periodName,
-  onPageChange,
-  onSelectTransaction,
-}) => {
-  const getChannelBadge = (channel: string, cardLast4?: string) => {
-    switch (channel) {
-      case 'TARJETA_CREDITO_BCP':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200/80">
-            <CreditCard className="w-3.5 h-3.5 text-blue-700" />
-            <span>Crédito BCP{cardLast4 ? ` **${cardLast4}` : ''}</span>
-          </span>
-        );
-      case 'TARJETA_DEBITO_BCP':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-50 text-sky-800 border border-sky-200/80">
-            <CreditCard className="w-3.5 h-3.5 text-sky-600" />
-            <span>Débito BCP{cardLast4 ? ` **${cardLast4}` : ''}</span>
-          </span>
-        );
-      case 'YAPE':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50 text-purple-800 border border-purple-200/80">
-            <Smartphone className="w-3.5 h-3.5 text-purple-600" />
-            <span>Yape</span>
-          </span>
-        );
-      case 'BCP_TRANSFERENCIA':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
-            <Building2 className="w-3.5 h-3.5 text-amber-600" />
-            <span>Transferencia BCP</span>
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-            {getChannelLabel(channel)}{cardLast4 ? ` **${cardLast4}` : ''}
-          </span>
-        );
-    }
-  };
-
+export function TransactionTable({ pageData, loading, periodName, onPageChange, onSelectTransaction }: TransactionTableProps) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
-      {/* Header section of Table */}
-      <div className="px-6 py-5 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
         <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-bold text-slate-900">Registro de Movimientos</h3>
-            {periodName && (
-              <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200/70 px-2 py-0.5 rounded-md">
-                {periodName}
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Haz clic en cualquier fila para inspeccionar el hash de auditoría y los detalles
-          </p>
+          <h2 className="font-display text-lg font-semibold">Registro {periodName && <span className="ml-1 text-sm font-normal text-muted">· {periodName}</span>}</h2>
+          <p className="mt-1 text-sm text-muted">{pageData ? `${pageData.totalElements} movimientos` : 'Cargando movimientos'}</p>
         </div>
-        {pageData && (
-          <div className="flex items-center gap-2">
-            {loading && (
-              <span className="text-xs text-blue-600 font-medium animate-pulse">
-                Buscando...
-              </span>
-            )}
-            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full w-fit">
-              {pageData.totalElements} movimientos registrados
-            </span>
-          </div>
-        )}
+        {loading && <span role="status" className="text-sm text-muted">Actualizando...</span>}
       </div>
 
-      {/* Table Content */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <caption className="sr-only">Historial paginado de transacciones bancarias</caption>
+        <table className="w-full min-w-[700px] border-collapse text-left">
+          <caption className="sr-only">Movimientos del período seleccionado</caption>
           <thead>
-            <tr className="border-b border-slate-200/70 bg-slate-50/70 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              <th scope="col" className="py-3.5 px-6">Comercio / Destino</th>
-              <th scope="col" className="py-3.5 px-6">Canal Bancario</th>
-              <th scope="col" className="py-3.5 px-6">Fecha & Hora</th>
-              <th scope="col" className="py-3.5 px-6 text-right">Importe</th>
-              <th scope="col" className="py-3.5 px-4 text-center">Acción</th>
+            <tr className="border-y border-line bg-canvas/70 text-xs font-semibold uppercase tracking-wider text-muted">
+              <th scope="col" className="px-5 py-3 sm:px-6">Comercio o contacto</th>
+              <th scope="col" className="px-4 py-3">Fecha</th>
+              <th scope="col" className="px-4 py-3">Medio</th>
+              <th scope="col" className="px-4 py-3 text-right">Importe</th>
+              <th scope="col" className="px-5 py-3 text-right sm:px-6"><span className="sr-only">Detalle</span></th>
             </tr>
           </thead>
-          <tbody
-            className={`divide-y divide-slate-100 text-sm transition-opacity duration-150 ${
-              loading && pageData ? 'opacity-60 pointer-events-none' : 'opacity-100'
-            }`}
-          >
+          <tbody className="divide-y divide-line">
             {loading && !pageData ? (
-              [...Array(6)].map((_, idx) => (
-                <tr key={idx} className="animate-pulse">
-                  <td className="py-4 px-6">
-                    <div className="h-4 w-40 bg-slate-200 rounded mb-1" />
-                    <div className="h-3 w-20 bg-slate-100 rounded" />
+              <tr><td colSpan={5} className="px-6 py-12 text-center text-sm text-muted">Cargando movimientos...</td></tr>
+            ) : !pageData?.content.length ? (
+              <tr><td colSpan={5} className="px-6 py-12 text-center text-sm text-muted">No se encontraron movimientos. Prueba otro período o ajusta los filtros.</td></tr>
+            ) : pageData.content.map((transaction) => {
+              const isIncome = transaction.flowType === 'INCOME';
+              const isTransfer = transaction.flowType === 'INTERNAL_TRANSFER';
+              const Icon = isIncome ? ArrowDownLeft : isTransfer ? ArrowLeftRight : ArrowUpRight;
+              return (
+                <tr key={transaction.id} className="transition-colors hover:bg-canvas/80">
+                  <td className="px-5 py-4 sm:px-6">
+                    <div className="flex items-center gap-3">
+                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${isIncome ? 'bg-positive/10 text-positive' : isTransfer ? 'bg-brand/10 text-brand' : 'bg-negative/10 text-negative'}`}>
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block max-w-48 truncate text-sm font-semibold text-ink">{transaction.contactName || 'Movimiento'}</span>
+                        <span className="block text-xs text-muted">{isIncome ? 'Entrada' : isTransfer ? 'Transferencia propia' : 'Gasto'}</span>
+                      </span>
+                    </div>
                   </td>
-                  <td className="py-4 px-6">
-                    <div className="h-6 w-28 bg-slate-200 rounded-lg" />
+                  <td className="whitespace-nowrap px-4 py-4 text-sm text-muted">{formatDate(transaction.transactionDate)}</td>
+                  <td className="whitespace-nowrap px-4 py-4 text-sm text-muted">{getChannelLabel(transaction.channel)}{transaction.cardLast4 ? ` ··${transaction.cardLast4}` : ''}</td>
+                  <td className={`font-num whitespace-nowrap px-4 py-4 text-right text-sm font-semibold ${isIncome ? 'text-positive' : isTransfer ? 'text-muted' : 'text-ink'}`}>
+                    {isIncome ? '+ ' : isTransfer ? '' : '− '}{formatCurrency(transaction.amount)}
                   </td>
-                  <td className="py-4 px-6">
-                    <div className="h-4 w-28 bg-slate-200 rounded" />
-                  </td>
-                  <td className="py-4 px-6 text-right">
-                    <div className="h-5 w-24 bg-slate-200 rounded ml-auto" />
-                  </td>
-                  <td className="py-4 px-4 text-center">
-                    <div className="h-6 w-6 bg-slate-200 rounded-full mx-auto" />
+                  <td className="px-5 py-4 text-right sm:px-6">
+                    <button type="button" onClick={() => onSelectTransaction(transaction)} className="rounded-lg px-2 py-1 text-sm font-semibold text-brand hover:bg-brand/10" aria-label={`Ver detalle de ${transaction.contactName || 'movimiento'}`}>
+                      Ver
+                    </button>
                   </td>
                 </tr>
-              ))
-            ) : !pageData || pageData.content.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-12 px-6 text-center">
-                  <div className="inline-flex p-3 rounded-full bg-slate-100 text-slate-400 mb-3">
-                    <Receipt className="w-6 h-6" />
-                  </div>
-                  <p className="text-slate-700 font-semibold text-sm">No se encontraron transacciones</p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Sincroniza tus correos o ajusta los filtros de búsqueda.
-                  </p>
-                </td>
-              </tr>
-            ) : (
-              pageData.content.map((tx) => {
-                const isIncome = tx.flowType === 'INCOME';
-                const isInternal = tx.flowType === 'INTERNAL_TRANSFER';
-
-                return (
-                  <tr
-                    key={tx.id}
-                    onClick={() => onSelectTransaction(tx)}
-                    className="hover:bg-blue-50/40 cursor-pointer transition-colors group"
-                  >
-                    {/* Contact / Merchant */}
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`p-2 rounded-xl flex-shrink-0 ${
-                            isIncome
-                              ? 'bg-emerald-50 text-emerald-600'
-                              : isInternal
-                              ? 'bg-blue-50 text-blue-600'
-                              : 'bg-rose-50 text-rose-600'
-                          }`}
-                        >
-                          {isIncome ? (
-                            <ArrowDownLeft className="w-4 h-4" />
-                          ) : isInternal ? (
-                            <ArrowLeftRight className="w-4 h-4" />
-                          ) : (
-                            <ArrowUpRight className="w-4 h-4" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                            {tx.contactName || 'Consumo no especificado'}
-                          </p>
-                          <p className="text-[11px] font-mono text-slate-400">
-                            {isInternal ? 'Traspaso propio · Sin cargo a gasto' : `ID: #${tx.id}`}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Channel Badge */}
-                    <td className="py-4 px-6 whitespace-nowrap">
-                      {getChannelBadge(tx.channel, tx.cardLast4)}
-                    </td>
-
-                    {/* Date */}
-                    <td className="py-4 px-6 whitespace-nowrap text-xs text-slate-600 font-medium">
-                      {formatDate(tx.transactionDate)}
-                    </td>
-
-                    {/* Amount */}
-                    <td className="py-4 px-6 text-right whitespace-nowrap">
-                      <span
-                        className={`font-extrabold font-num text-sm sm:text-base ${
-                          isIncome
-                            ? 'text-emerald-600'
-                            : isInternal
-                            ? 'text-slate-600'
-                            : 'text-slate-900'
-                        }`}
-                      >
-                        {isIncome ? '+ ' : isInternal ? '↔ ' : '- '}
-                        {formatCurrency(tx.amount)}
-                      </span>
-                    </td>
-
-                    {/* Action Eye */}
-                    <td className="py-4 px-4 text-center whitespace-nowrap">
-                      <span className="p-1.5 rounded-lg text-slate-400 group-hover:text-emerald-700 group-hover:bg-emerald-50 inline-flex transition-colors">
-                        <Eye className="w-4 h-4" />
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      {/* Pagination Controls */}
       {pageData && pageData.totalPages > 1 && (
-        <nav
-          aria-label="Paginación de transacciones"
-          className="px-6 py-4 border-t border-slate-200/80 bg-slate-50/50 flex items-center justify-between"
-        >
-          <div className="text-xs text-slate-500 font-medium">
-            Página <strong className="text-slate-800">{pageData.number + 1}</strong> de{' '}
-            <strong className="text-slate-800">{pageData.totalPages}</strong>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onPageChange(pageData.number - 1)}
-              disabled={pageData.first || loading}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Anterior</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onPageChange(pageData.number + 1)}
-              disabled={pageData.last || loading}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs"
-            >
-              <span>Siguiente</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
+        <nav aria-label="Paginación de movimientos" className="flex items-center justify-between gap-3 border-t border-line px-5 py-4 sm:px-6">
+          <span className="text-sm text-muted">Página {pageData.number + 1} de {pageData.totalPages}</span>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => onPageChange(pageData.number - 1)} disabled={pageData.first || loading} className="rounded-lg border border-line p-2 text-ink hover:bg-canvas disabled:opacity-40" aria-label="Página anterior"><ChevronLeft className="h-4 w-4" /></button>
+            <button type="button" onClick={() => onPageChange(pageData.number + 1)} disabled={pageData.last || loading} className="rounded-lg border border-line p-2 text-ink hover:bg-canvas disabled:opacity-40" aria-label="Página siguiente"><ChevronRight className="h-4 w-4" /></button>
           </div>
         </nav>
       )}
     </div>
   );
-};
+}
