@@ -18,9 +18,12 @@ import org.springframework.web.client.RestClient;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import com.store.api.model.entity.User;
+import com.store.api.config.security.UserContext;
 import com.store.api.repository.UserRepository;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -46,6 +49,13 @@ public class GoogleOAuthService {
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
     private final RestClient restClient = RestClient.create();
+
+    private Optional<GoogleOAuthToken> findTokenForCurrentContext() {
+        User currentUser = UserContext.getCurrentUser();
+        return currentUser == null
+                ? tokenRepository.findFirstByOrderByUpdatedAtDesc()
+                : tokenRepository.findByUserId(currentUser.getId());
+    }
 
     public String buildAuthorizationUrl() {
         if (clientId == null || clientId.isBlank()) {
@@ -160,7 +170,7 @@ public class GoogleOAuthService {
 
     @Transactional
     public Optional<String> getValidAccessToken() {
-        Optional<GoogleOAuthToken> tokenOpt = tokenRepository.findFirstByOrderByUpdatedAtDesc();
+        Optional<GoogleOAuthToken> tokenOpt = findTokenForCurrentContext();
         if (tokenOpt.isEmpty()) {
             return Optional.empty();
         }
@@ -209,11 +219,16 @@ public class GoogleOAuthService {
 
     @Transactional(readOnly = true)
     public GoogleAuthStatusResponse getStatus() {
-        Optional<GoogleOAuthToken> tokenOpt = tokenRepository.findFirstByOrderByUpdatedAtDesc();
+        User currentUser = UserContext.getCurrentUser();
+        Optional<GoogleOAuthToken> tokenOpt = currentUser == null
+                ? Optional.empty()
+                : tokenRepository.findByUserId(currentUser.getId());
         if (tokenOpt.isPresent()) {
             return GoogleAuthStatusResponse.builder()
                     .connected(true)
                     .email(tokenOpt.get().getEmail())
+                    .lastSuccessfulSyncAt(tokenOpt.get().getLastSuccessfulSyncAt())
+                    .lastSyncFailed(Boolean.TRUE.equals(tokenOpt.get().getLastSyncFailed()))
                     .build();
         }
         return GoogleAuthStatusResponse.builder()
@@ -229,8 +244,13 @@ public class GoogleOAuthService {
     }
 
     @Transactional(readOnly = true)
+    public List<User> getConnectedUsers() {
+        return tokenRepository.findConnectedUsers();
+    }
+
+    @Transactional(readOnly = true)
     public Optional<Long> getLastSyncedInternalDate() {
-        return tokenRepository.findFirstByOrderByUpdatedAtDesc()
+        return findTokenForCurrentContext()
                 .map(GoogleOAuthToken::getLastSyncedInternalDate);
     }
 
@@ -239,7 +259,7 @@ public class GoogleOAuthService {
         if (internalDateMs == null || internalDateMs <= 0) {
             return;
         }
-        Optional<GoogleOAuthToken> tokenOpt = tokenRepository.findFirstByOrderByUpdatedAtDesc();
+        Optional<GoogleOAuthToken> tokenOpt = findTokenForCurrentContext();
         if (tokenOpt.isPresent()) {
             GoogleOAuthToken token = tokenOpt.get();
             Long current = token.getLastSyncedInternalDate();
@@ -252,8 +272,23 @@ public class GoogleOAuthService {
     }
 
     @Transactional
+    public void recordSyncResult(boolean success) {
+        findTokenForCurrentContext().ifPresent(token -> {
+            token.setLastSyncFailed(!success);
+            if (success) {
+                token.setLastSuccessfulSyncAt(Instant.now());
+            }
+            tokenRepository.save(token);
+        });
+    }
+
+    @Transactional
     public void disconnect() {
-        tokenRepository.deleteAll();
-        log.info("Cleared all Google OAuth tokens from database.");
+        User currentUser = UserContext.getCurrentUser();
+        if (currentUser == null) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED);
+        }
+        tokenRepository.findByUserId(currentUser.getId()).ifPresent(tokenRepository::delete);
+        log.info("Disconnected Google OAuth token for user [{}].", currentUser.getEmail());
     }
 }

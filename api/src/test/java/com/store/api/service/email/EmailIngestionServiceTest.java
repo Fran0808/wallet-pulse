@@ -99,6 +99,7 @@ class EmailIngestionServiceTest {
 
         verify(processedEmailRepository, times(1)).save(any());
         verify(googleOAuthService, times(1)).updateLastSyncedInternalDate(1700000060000L);
+        verify(googleOAuthService).recordSyncResult(true);
     }
 
     @Test
@@ -115,6 +116,28 @@ class EmailIngestionServiceTest {
         assertNotNull(response);
         assertEquals(0, response.getScannedCount());
         assertEquals(0, response.getSavedCount());
+        verify(processedEmailRepository, never()).save(any());
+        verify(googleOAuthService, never()).updateLastSyncedInternalDate(anyLong());
+        verify(googleOAuthService).recordSyncResult(true);
+    }
+
+    @Test
+    void shouldReportPartialSyncWhenMessageProcessingFails() {
+        String token = "mock-access-token";
+        when(googleOAuthService.getValidAccessToken()).thenReturn(Optional.of(token));
+        EmailMessageDto message = EmailMessageDto.builder()
+                .messageId("failed_message")
+                .internalDateMs(1700000060000L)
+                .build();
+        when(gmailApiClient.fetchFinancialEmails(eq(token), anyInt(), isNull(), any()))
+                .thenReturn(List.of(message));
+        when(parserDispatcher.dispatchAndParse(any(), any(), any(), any()))
+                .thenThrow(new IllegalArgumentException("Malformed message"));
+
+        EmailSyncResponse response = emailIngestionService.syncEmails();
+
+        assertEquals("PARTIAL", response.getStatus());
+        verify(googleOAuthService).recordSyncResult(false);
         verify(processedEmailRepository, never()).save(any());
         verify(googleOAuthService, never()).updateLastSyncedInternalDate(anyLong());
     }

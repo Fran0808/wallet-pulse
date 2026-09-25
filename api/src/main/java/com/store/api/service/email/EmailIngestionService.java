@@ -73,6 +73,10 @@ public class EmailIngestionService {
             List<EmailMessageDto> messages;
             Optional<String> googleToken = googleOAuthService.getValidAccessToken();
 
+        if (googleToken.isEmpty() && UserContext.getCurrentUser() != null && googleOAuthService.getStatus().isConnected()) {
+            throw new IllegalStateException("The connected Gmail account is unavailable for synchronization");
+        }
+
         if (googleToken.isPresent()) {
             log.info("Synchronizing emails using Google Gmail REST API (OAuth2)...");
             Long lastSyncedInternalDate = googleOAuthService.getLastSyncedInternalDate().orElse(null);
@@ -88,23 +92,12 @@ public class EmailIngestionService {
         }
         int scannedCount = messages.size();
         int savedCount = 0;
+        int processingErrors = 0;
         List<TransactionResponse> savedTransactions = new ArrayList<>();
 
         long maxInternalDateMs = 0L;
 
         for (EmailMessageDto msg : messages) {
-            if (msg.getInternalDateMs() != null && msg.getInternalDateMs() > maxInternalDateMs) {
-                maxInternalDateMs = msg.getInternalDateMs();
-            }
-
-            if (msg.getMessageId() != null && !processedEmailRepository.existsById(msg.getMessageId())) {
-                processedEmailRepository.save(ProcessedEmailMessage.builder()
-                        .messageId(msg.getMessageId())
-                        .internalDateMs(msg.getInternalDateMs())
-                        .subject(msg.getSubject())
-                        .build());
-            }
-
             try {
                 Optional<ParsedEmailTransaction> parsedOpt = parserDispatcher.dispatchAndParse(
                         msg.getFrom(),
@@ -129,25 +122,43 @@ public class EmailIngestionService {
                     savedTransactions.add(saved);
                     savedCount++;
                 }
+
+                if (msg.getMessageId() != null && !processedEmailRepository.existsById(msg.getMessageId())) {
+                    processedEmailRepository.save(ProcessedEmailMessage.builder()
+                            .messageId(msg.getMessageId())
+                            .internalDateMs(msg.getInternalDateMs())
+                            .subject(msg.getSubject())
+                            .build());
+                }
+                if (msg.getInternalDateMs() != null && msg.getInternalDateMs() > maxInternalDateMs) {
+                    maxInternalDateMs = msg.getInternalDateMs();
+                }
             } catch (Exception ex) {
+                processingErrors++;
                 log.warn("Error processing email message ID [{}]: {}", msg.getMessageId(), ex.getMessage());
             }
         }
 
-        if (maxInternalDateMs > 0) {
+        if (processingErrors == 0 && maxInternalDateMs > 0) {
             googleOAuthService.updateLastSyncedInternalDate(maxInternalDateMs);
         }
 
         log.info("Email synchronization completed: scanned={}, saved={}", scannedCount, savedCount);
+        googleOAuthService.recordSyncResult(processingErrors == 0);
 
             return EmailSyncResponse.builder()
-                    .status("SUCCESS")
+                    .status(processingErrors == 0 ? "SUCCESS" : "PARTIAL")
                     .scannedCount(scannedCount)
                     .processedInBatch(messages.size())
                     .savedCount(savedCount)
                     .transactions(savedTransactions)
-                    .message("Emails synchronized successfully")
+                    .message(processingErrors == 0
+                            ? "Emails synchronized successfully"
+                            : "Some email messages could not be processed")
                     .build();
+        } catch (RuntimeException ex) {
+            googleOAuthService.recordSyncResult(false);
+            throw ex;
         } finally {
             if (contextSetBySync) {
                 UserContext.clear();

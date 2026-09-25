@@ -2,6 +2,9 @@ package com.store.api.service.email.scheduler;
 
 import com.store.api.model.dto.email.EmailSyncResponse;
 import com.store.api.service.email.EmailIngestionService;
+import com.store.api.service.auth.GoogleOAuthService;
+import com.store.api.config.security.UserContext;
+import com.store.api.model.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,26 +18,32 @@ import org.springframework.stereotype.Component;
 public class EmailSyncScheduler {
 
     private final EmailIngestionService emailIngestionService;
+    private final GoogleOAuthService googleOAuthService;
 
     @Scheduled(fixedDelayString = "${mail.sync.fixed-delay-ms:60000}", initialDelay = 15000)
     public void scheduleEmailSync() {
-        if (!emailIngestionService.hasActiveConnection()) {
+        java.util.List<User> connectedUsers = googleOAuthService.getConnectedUsers();
+        if (connectedUsers.isEmpty()) {
             log.debug("Background email synchronization skipped: Google account not yet connected.");
             return;
         }
 
-        log.info("Starting scheduled background email synchronization via Gmail API...");
-        try {
-            EmailSyncResponse response = emailIngestionService.syncEmails();
-            if (response.getSavedCount() > 0) {
-                log.info("Scheduled email sync completed successfully: scanned={}, saved={}",
-                        response.getScannedCount(), response.getSavedCount());
-            } else {
-                log.debug("Scheduled email sync: no new transactions found (scanned={})",
-                        response.getScannedCount());
+        for (User user : connectedUsers) {
+            UserContext.setCurrentUser(user);
+            try {
+                if (!emailIngestionService.hasActiveConnection()) {
+                    googleOAuthService.recordSyncResult(false);
+                    log.warn("Background email synchronization skipped: connection unavailable for [{}]", user.getEmail());
+                    continue;
+                }
+                EmailSyncResponse response = emailIngestionService.syncEmails();
+                log.info("Scheduled email sync completed for [{}]: scanned={}, saved={}",
+                        user.getEmail(), response.getScannedCount(), response.getSavedCount());
+            } catch (Exception e) {
+                log.error("Scheduled email sync failed for [{}]", user.getEmail(), e);
+            } finally {
+                UserContext.clear();
             }
-        } catch (Exception e) {
-            log.error("Scheduled email sync failed", e);
         }
     }
 }
