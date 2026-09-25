@@ -64,4 +64,71 @@ class YapeRegexParserTest {
         assertEquals("Maria Gomez", result?.contactName)
         assertTrue(result?.transactionHash?.isNotBlank() == true)
     }
+
+    @Test
+    fun parse_anonymousIncomeNotification_extractsCorrectData() {
+        val title = "¡Te yapearon!"
+        val text = "Te enviaron S/ 37.50 a tu Yape"
+
+        val result = YapeRegexParser.parse(title, text)
+
+        assertNotNull(result)
+        assertEquals(BigDecimal("37.50"), result?.amount)
+        assertEquals(FlowType.INCOME, result?.flowType)
+        assertEquals("Yape", result?.contactName)
+        assertTrue(result?.transactionHash?.isNotBlank() == true)
+    }
+
+    @Test
+    fun parse_generalIncomePaymentNotification_extractsCorrectData() {
+        val title = "Confirmación de Pago"
+        val text = "Te enviaron un pago de S/ 15.00 a tu Yape"
+
+        val result = YapeRegexParser.parse(title, text)
+
+        assertNotNull(result)
+        assertEquals(BigDecimal("15.00"), result?.amount)
+        assertEquals(FlowType.INCOME, result?.flowType)
+        assertEquals("Yape", result?.contactName)
+    }
+
+    @Test
+    fun parse_recibisteYapeNotification_extractsCorrectData() {
+        val title = "¡Te yapearon!"
+        val text = "Recibiste un yape de S/ 50.00"
+
+        val result = YapeRegexParser.parse(title, text)
+
+        assertNotNull(result)
+        assertEquals(BigDecimal("50.00"), result?.amount)
+        assertEquals(FlowType.INCOME, result?.flowType)
+        assertEquals("Yape", result?.contactName)
+    }
+
+    @Test
+    fun parse_bigTextNotification_prioritizesBigTextContent() {
+        val title = "¡Te yapearon!"
+        val shortText = "Te enviaron S/ 100.00"
+        val bigText = "Ana Torres te envió S/ 100.00 a tu Yape"
+
+        val result = YapeRegexParser.parse(title, shortText, bigText)
+
+        assertNotNull(result)
+        assertEquals(BigDecimal("100.00"), result?.amount)
+        assertEquals(FlowType.INCOME, result?.flowType)
+        assertEquals("Ana Torres", result?.contactName)
+    }
+
+    @Test
+    fun parse_fallbackMinimalNotification_extractsCorrectData() {
+        val title = "¡Te yapearon!"
+        val text = "S/ 80.00"
+
+        val result = YapeRegexParser.parse(title, text)
+
+        assertNotNull(result)
+        assertEquals(BigDecimal("80.00"), result?.amount)
+        assertEquals(FlowType.INCOME, result?.flowType)
+        assertEquals("Yape", result?.contactName)
+    }
 }

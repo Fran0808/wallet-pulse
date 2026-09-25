@@ -16,6 +16,12 @@ class YapeNotificationListenerService : NotificationListenerService() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        Log.i("YapeListener", "Notification Listener Service Connected. Triggering pending sync.")
+        TransactionSyncWorker.enqueue(applicationContext)
+    }
+
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         if (sbn == null) return
@@ -29,10 +35,11 @@ class YapeNotificationListenerService : NotificationListenerService() {
         val extras = sbn.notification.extras
         val title = extras.getCharSequence("android.title")?.toString()
         val text = extras.getCharSequence("android.text")?.toString()
+        val bigText = extras.getCharSequence("android.bigText")?.toString()
 
-        Log.d("YapeListener", "Intercepted Yape notification: Title=[$title], Text=[$text]")
+        Log.d("YapeListener", "Intercepted Yape notification: Title=[$title], Text=[$text], BigText=[$bigText]")
 
-        val parsed = YapeRegexParser.parse(title, text) ?: return
+        val parsed = YapeRegexParser.parse(title, text, bigText) ?: return
 
         Log.i("YapeListener", "Parsed successfully: Amount=${parsed.amount}, Flow=${parsed.flowType}, Contact=${parsed.contactName}")
 
