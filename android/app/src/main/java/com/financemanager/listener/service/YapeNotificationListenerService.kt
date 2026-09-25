@@ -5,7 +5,7 @@ import android.service.notification.StatusBarNotification
 import android.util.Log
 import com.financemanager.listener.data.AppDatabase
 import com.financemanager.listener.data.LocalTransactionEntity
-import com.financemanager.listener.parser.YapeRegexParser
+import com.financemanager.listener.parser.NotificationParserDispatcher
 import com.financemanager.listener.worker.TransactionSyncWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,8 +27,9 @@ class YapeNotificationListenerService : NotificationListenerService() {
         if (sbn == null) return
 
         val packageName = sbn.packageName
+        val dispatcher = NotificationParserDispatcher.defaultInstance
 
-        if (!YapeRegexParser.isYapeNotification(packageName)) {
+        if (!dispatcher.isSupportedPackage(packageName)) {
             return
         }
 
@@ -37,11 +38,11 @@ class YapeNotificationListenerService : NotificationListenerService() {
         val text = extras.getCharSequence("android.text")?.toString()
         val bigText = extras.getCharSequence("android.bigText")?.toString()
 
-        Log.d("YapeListener", "Intercepted Yape notification: Title=[$title], Text=[$text], BigText=[$bigText]")
+        Log.d("NotificationListener", "Intercepted notification for package [$packageName]: Title=[$title], Text=[$text], BigText=[$bigText]")
 
-        val parsed = YapeRegexParser.parse(title, text, bigText) ?: return
+        val parsed = dispatcher.parse(packageName, title, text, bigText) ?: return
 
-        Log.i("YapeListener", "Parsed successfully: Amount=${parsed.amount}, Flow=${parsed.flowType}, Contact=${parsed.contactName}")
+        Log.i("NotificationListener", "Parsed successfully: Channel=${parsed.channel}, Amount=${parsed.amount}, Flow=${parsed.flowType}, Contact=${parsed.contactName}")
 
         serviceScope.launch {
             val database = AppDatabase.getDatabase(applicationContext)
