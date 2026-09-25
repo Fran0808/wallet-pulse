@@ -1,16 +1,6 @@
-import React from 'react';
-import {
-  Wallet,
-  TrendingDown,
-  TrendingUp,
-  Utensils,
-  Gamepad2,
-} from 'lucide-react';
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight } from 'lucide-react';
 import type { PeriodAnalytics } from '../../types';
-import { formatCurrency } from '../../utils';
-import { TopMerchantsCard, AccountsChannelsCard } from '../dashboard';
-import { CategoryDonutChart, ChannelsMultiRingChart } from '../charts';
-import type { CategoryItem } from '../charts';
+import { formatCurrency, getChannelLabel } from '../../utils';
 
 interface MyMoneyViewProps {
   analytics: PeriodAnalytics | null;
@@ -19,125 +9,103 @@ interface MyMoneyViewProps {
   selectedMonth: number;
 }
 
-export const MyMoneyView: React.FC<MyMoneyViewProps> = ({
-  analytics,
-  loading,
-  selectedYear,
-}) => {
-  const totalOutflows = analytics?.monthlyExpense || 0;
-  const totalInflows = analytics?.monthlyIncome || 0;
-  const netCashflow = totalInflows - totalOutflows;
-
-  const categoryHighlights: CategoryItem[] = [
-    {
-      id: 'entretenimiento',
-      label: 'Salidas y Entretenimiento',
-      amount: 69.99,
-      percentage: 88.3,
-      color: 'bg-purple-100 text-purple-700 border-purple-200',
-      strokeColor: '#9333ea', // Purple-600
-      icon: Gamepad2,
-      merchants: 'Betano, Gamivo',
-    },
-    {
-      id: 'comida',
-      label: 'Comida y Bebidas',
-      amount: 9.30,
-      percentage: 11.7,
-      color: 'bg-amber-100 text-amber-700 border-amber-200',
-      strokeColor: '#f59e0b', // Amber-500
-      icon: Utensils,
-      merchants: 'Pumacahua VES',
-    },
-  ];
+export function MyMoneyView({ analytics, loading, selectedYear, selectedMonth }: MyMoneyViewProps) {
+  const expense = analytics?.monthlyExpense ?? 0;
+  const income = analytics?.monthlyIncome ?? 0;
+  const net = income - expense;
+  const period = new Intl.DateTimeFormat('es-PE', { month: 'long', year: 'numeric' }).format(new Date(selectedYear, selectedMonth - 1, 1));
 
   return (
-    <div className="space-y-6">
-      {/* 1. Header */}
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Mi Dinero & Flujo de Caja</h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Distribución de gasto por categorías, concentración de comercios y balance neto en {analytics?.periodName || 'el período'} {selectedYear}.
-        </p>
+        <p className="eyebrow">Análisis de {period}</p>
+        <h1 className="font-display mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Mi dinero</h1>
+        <p className="mt-2 text-sm text-muted">Una vista de tus entradas, gastos y medios de pago registrados.</p>
       </div>
 
-      {/* 2. Top Summary Cards (3 Pillars) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Outflows */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Salidas Totales</span>
-            <div className="h-7 w-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
-              <TrendingDown className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-2xl font-extrabold text-slate-900 tabular-nums">
-              {loading ? 'S/ ...' : formatCurrency(totalOutflows)}
-            </span>
-            <p className="text-[11px] text-slate-500 mt-0.5">Gastos reales confirmados</p>
-          </div>
+      <section className="surface grid divide-y divide-line md:grid-cols-3 md:divide-x md:divide-y-0" aria-label="Flujo de caja del período">
+        <div className="p-6 sm:p-7">
+          <div className="flex items-center gap-2 text-negative"><ArrowUpRight className="h-4 w-4" /><span className="eyebrow !text-negative">Salidas</span></div>
+          <p className="font-display font-num mt-4 text-3xl font-semibold tracking-tight">{loading ? 'S/ …' : formatCurrency(expense)}</p>
+          <p className="mt-2 text-sm text-muted">Compras y pagos del período</p>
         </div>
-
-        {/* Inflows */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Entradas</span>
-            <div className="h-7 w-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <TrendingUp className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-2xl font-extrabold text-slate-900 tabular-nums">
-              {loading ? 'S/ ...' : formatCurrency(totalInflows)}
-            </span>
-            <p className="text-[11px] text-slate-500 mt-0.5">Sueldos y depósitos</p>
-          </div>
+        <div className="p-6 sm:p-7">
+          <div className="flex items-center gap-2 text-positive"><ArrowDownLeft className="h-4 w-4" /><span className="eyebrow !text-positive">Entradas</span></div>
+          <p className="font-display font-num mt-4 text-3xl font-semibold tracking-tight">{loading ? 'S/ …' : formatCurrency(income)}</p>
+          <p className="mt-2 text-sm text-muted">Dinero recibido en el período</p>
         </div>
-
-        {/* Net Cashflow */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Flujo Neto del Mes</span>
-            <div className="h-7 w-7 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
-              <Wallet className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className={`text-2xl font-extrabold tabular-nums ${netCashflow >= 0 ? 'text-emerald-600' : 'text-slate-900'}`}>
-              {loading ? 'S/ ...' : formatCurrency(netCashflow)}
-            </span>
-            <p className="text-[11px] text-slate-500 mt-0.5">Diferencia neta mensual</p>
-          </div>
+        <div className="p-6 sm:p-7">
+          <div className="flex items-center gap-2 text-brand"><ArrowLeftRight className="h-4 w-4" /><span className="eyebrow !text-brand">Flujo neto</span></div>
+          <p className={`font-display font-num mt-4 text-3xl font-semibold tracking-tight ${net < 0 ? 'text-negative' : ''}`}>{loading ? 'S/ …' : formatCurrency(net)}</p>
+          <p className="mt-2 text-sm text-muted">Entradas menos salidas registradas</p>
         </div>
+      </section>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <section className="surface p-6 sm:p-7" aria-labelledby="channel-analysis-heading">
+          <div className="border-b border-line pb-5">
+            <p className="eyebrow">Distribución</p>
+            <h2 id="channel-analysis-heading" className="font-display mt-1 text-xl font-semibold">¿Cómo pagaste?</h2>
+            <p className="mt-1 text-sm text-muted">Parte del gasto que corresponde a cada medio.</p>
+          </div>
+          {loading && !analytics ? (
+            <p className="py-10 text-sm text-muted" role="status">Calculando distribución...</p>
+          ) : !analytics?.channelBreakdown.length ? (
+            <p className="py-10 text-sm text-muted">No hay gastos registrados en este período.</p>
+          ) : (
+            <div className="divide-y divide-line">
+              {analytics.channelBreakdown.map((channel, index) => {
+                const isWallet = channel.channel.includes('YAPE') || channel.channel.includes('PLIN');
+                return (
+                  <div key={`${channel.channel}-${channel.cardLast4 || index}`} className="py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 truncate text-sm font-semibold">{channel.displayName?.replace(/\*\*/g, '··') || getChannelLabel(channel.channel)}</span>
+                      <span className="font-num shrink-0 text-sm font-semibold">{formatCurrency(channel.amount)}</span>
+                    </div>
+                    <div className="mt-2.5 h-1.5 rounded-full bg-canvas">
+                      <div className={`h-full rounded-full ${isWallet ? 'bg-yape' : 'bg-brand'}`} style={{ width: `${Math.min(100, Math.max(0, channel.percentage))}%` }} />
+                    </div>
+                    <div className="font-num mt-2 flex justify-between text-xs text-muted">
+                      <span>{channel.count} {channel.count === 1 ? 'movimiento' : 'movimientos'}</span>
+                      <span>{channel.percentage.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="surface p-6 sm:p-7" aria-labelledby="merchants-heading">
+          <div className="border-b border-line pb-5">
+            <p className="eyebrow">Concentración</p>
+            <h2 id="merchants-heading" className="font-display mt-1 text-xl font-semibold">¿Dónde gastaste más?</h2>
+            <p className="mt-1 text-sm text-muted">Comercios ordenados por gasto total.</p>
+          </div>
+          {loading && !analytics ? (
+            <p className="py-10 text-sm text-muted" role="status">Calculando comercios...</p>
+          ) : !analytics?.topMerchants.length ? (
+            <p className="py-10 text-sm text-muted">No hay comercios registrados en este período.</p>
+          ) : (
+            <ol className="divide-y divide-line">
+              {analytics.topMerchants.map((merchant, index) => (
+                <li key={`${merchant.merchantName}-${index}`} className="flex items-center gap-4 py-4">
+                  <span className="font-num w-6 shrink-0 text-sm font-medium text-muted">{String(index + 1).padStart(2, '0')}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold">{merchant.merchantName || 'Comercio sin nombre'}</span>
+                    <span className="mt-1 block text-xs text-muted">{merchant.transactionCount} {merchant.transactionCount === 1 ? 'consumo' : 'consumos'} · {merchant.percentage.toFixed(1)}% del gasto</span>
+                  </span>
+                  <span className="font-num shrink-0 text-sm font-semibold">{formatCurrency(merchant.totalAmount)}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <CategoryDonutChart
-          categories={categoryHighlights}
-          totalAmount={totalOutflows}
-          loading={loading}
-        />
-
-        <ChannelsMultiRingChart
-          channels={analytics?.channelBreakdown || []}
-          totalExpense={totalOutflows}
-          internalTransfersAmount={analytics?.internalTransfersAmount || 0}
-          loading={loading}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TopMerchantsCard
-          merchants={analytics?.topMerchants || []}
-          loading={loading}
-        />
-        <AccountsChannelsCard
-          channels={analytics?.channelBreakdown || []}
-          internalTransfersAmount={analytics?.internalTransfersAmount || 0}
-          loading={loading}
-        />
-      </div>
+      <p className="text-sm leading-relaxed text-muted">
+        {loading ? 'Calculando transferencias propias...' : `${formatCurrency(analytics?.internalTransfersAmount ?? 0)} en transferencias entre tus cuentas quedan fuera del total de gastos.`}
+      </p>
     </div>
   );
-};
+}
