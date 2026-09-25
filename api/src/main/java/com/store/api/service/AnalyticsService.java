@@ -2,7 +2,10 @@ package com.store.api.service;
 
 import com.store.api.config.security.UserContext;
 import com.store.api.model.dto.FinancialSummaryResponse;
+import com.store.api.model.dto.PeriodAnalyticsResponse;
+import com.store.api.model.entity.Transaction;
 import com.store.api.model.entity.User;
+import com.store.api.model.enums.ChannelType;
 import com.store.api.model.enums.FlowType;
 import com.store.api.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +13,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,66 +48,88 @@ public class AnalyticsService {
     }
 
     @Transactional(readOnly = true)
-    public com.store.api.model.dto.PeriodAnalyticsResponse getPeriodAnalytics(Integer year, Integer month) {
+    public PeriodAnalyticsResponse getPeriodAnalytics(Integer year, Integer month) {
         User currentUser = UserContext.getCurrentUser();
         Long userId = (currentUser != null) ? currentUser.getId() : null;
 
-        java.time.LocalDate now = java.time.LocalDate.now();
+        LocalDate now = LocalDate.now();
         int targetYear = (year != null && year > 2000) ? year : now.getYear();
         int targetMonth = (month != null && month >= 1 && month <= 12) ? month : now.getMonthValue();
 
-        java.time.YearMonth targetYearMonth = java.time.YearMonth.of(targetYear, targetMonth);
-        java.time.LocalDateTime startOfMonth = targetYearMonth.atDay(1).atStartOfDay();
-        java.time.LocalDateTime endOfMonth = targetYearMonth.atEndOfMonth().atTime(23, 59, 59);
+        YearMonth targetYearMonth = YearMonth.of(targetYear, targetMonth);
+        LocalDateTime startOfMonth = targetYearMonth.atDay(1).atStartOfDay();
+        LocalDateTime endOfMonth = targetYearMonth.atEndOfMonth().atTime(LocalTime.MAX);
+        boolean isCurrentMonth = targetYearMonth.equals(YearMonth.from(now));
+        boolean isFutureMonth = targetYearMonth.isAfter(YearMonth.from(now));
+        int visibleDays = isFutureMonth ? 0 : isCurrentMonth ? now.getDayOfMonth() : targetYearMonth.lengthOfMonth();
+        LocalDateTime visibleEnd = isCurrentMonth
+                ? now.atTime(LocalTime.MAX)
+                : endOfMonth;
 
-        java.math.BigDecimal monthlyExpense = transactionRepository.sumAmountByFlowTypeAndDateRange(FlowType.EXPENSE, startOfMonth, endOfMonth, userId);
-        java.math.BigDecimal monthlyIncome = transactionRepository.sumAmountByFlowTypeAndDateRange(FlowType.INCOME, startOfMonth, endOfMonth, userId);
-        java.math.BigDecimal internalTransfers = transactionRepository.sumAmountByFlowTypeAndDateRange(FlowType.INTERNAL_TRANSFER, startOfMonth, endOfMonth, userId);
+        YearMonth previousYearMonth = targetYearMonth.minusMonths(1);
+        int comparisonDays = isCurrentMonth
+                ? Math.min(visibleDays, previousYearMonth.lengthOfMonth())
+                : previousYearMonth.lengthOfMonth();
+        BigDecimal previousPeriodExpense = isFutureMonth ? null
+                : transactionRepository.sumAmountByFlowTypeAndDateRange(
+                        FlowType.EXPENSE,
+                        previousYearMonth.atDay(1).atStartOfDay(),
+                        previousYearMonth.atDay(comparisonDays).atTime(LocalTime.MAX),
+                        userId
+                );
+
+        BigDecimal monthlyExpense = transactionRepository.sumAmountByFlowTypeAndDateRange(FlowType.EXPENSE, startOfMonth, visibleEnd, userId);
+        BigDecimal monthlyIncome = transactionRepository.sumAmountByFlowTypeAndDateRange(FlowType.INCOME, startOfMonth, visibleEnd, userId);
+        BigDecimal internalTransfers = transactionRepository.sumAmountByFlowTypeAndDateRange(FlowType.INTERNAL_TRANSFER, startOfMonth, visibleEnd, userId);
+
+        BigDecimal[] dailyAmounts = new BigDecimal[visibleDays];
+        Arrays.fill(dailyAmounts, BigDecimal.ZERO);
+        if (visibleDays > 0) {
+            for (Object[] row : transactionRepository.findExpenseAmountsByDateRange(startOfMonth, visibleEnd, userId)) {
+                int day = ((LocalDateTime) row[0]).getDayOfMonth();
+                if (day <= visibleDays) {
+                    dailyAmounts[day - 1] = dailyAmounts[day - 1].add((BigDecimal) row[1]);
+                }
+            }
+        }
+        List<PeriodAnalyticsResponse.DailyExpenseDto> dailyExpenses = new ArrayList<>();
+        BigDecimal runningExpense = BigDecimal.ZERO;
+        for (int day = 1; day <= visibleDays; day++) {
+            runningExpense = runningExpense.add(dailyAmounts[day - 1]);
+            dailyExpenses.add(PeriodAnalyticsResponse.DailyExpenseDto.builder()
+                    .day(day)
+                    .amount(dailyAmounts[day - 1])
+                    .cumulativeAmount(runningExpense)
+                    .build());
+        }
 
         long totalMovements = transactionRepository.countByUserId(userId);
 
-        java.util.Optional<com.store.api.model.entity.Transaction> latestOpt = transactionRepository.findLatestExpense(userId);
-        String lastMerchant = latestOpt.map(com.store.api.model.entity.Transaction::getContactName).orElse("Sin gastos");
-        java.math.BigDecimal lastAmount = latestOpt.map(com.store.api.model.entity.Transaction::getAmount).orElse(java.math.BigDecimal.ZERO);
-        java.time.LocalDateTime lastDate = latestOpt.map(com.store.api.model.entity.Transaction::getTransactionDate).orElse(null);
+        Optional<Transaction> latestOpt = transactionRepository.findLatestExpense(userId);
+        String lastMerchant = latestOpt.map(Transaction::getContactName).orElse("Sin gastos");
+        BigDecimal lastAmount = latestOpt.map(Transaction::getAmount).orElse(BigDecimal.ZERO);
+        LocalDateTime lastDate = latestOpt.map(Transaction::getTransactionDate).orElse(null);
 
-        java.util.List<Object[]> rawBreakdown = transactionRepository.findExpenseBreakdownByChannel(startOfMonth, endOfMonth, userId);
-        java.util.List<com.store.api.model.dto.PeriodAnalyticsResponse.ChannelBreakdownDto> breakdownList = new java.util.ArrayList<>();
+        List<Object[]> rawBreakdown = transactionRepository.findExpenseBreakdownByChannel(startOfMonth, visibleEnd, userId);
+        List<PeriodAnalyticsResponse.ChannelBreakdownDto> breakdownList = new ArrayList<>();
 
         String topChannel = "N/A";
-        java.math.BigDecimal topChannelAmount = java.math.BigDecimal.ZERO;
+        BigDecimal topChannelAmount = BigDecimal.ZERO;
         double topChannelPercentage = 0.0;
 
         for (Object[] row : rawBreakdown) {
             String channel = (String) row[0];
             String cardLast4 = (String) row[1];
-            java.math.BigDecimal amount = (java.math.BigDecimal) row[2];
+            BigDecimal amount = (BigDecimal) row[2];
             long count = ((Number) row[3]).longValue();
 
-            double percentage = monthlyExpense.compareTo(java.math.BigDecimal.ZERO) > 0
-                    ? amount.divide(monthlyExpense, 4, java.math.RoundingMode.HALF_UP).doubleValue() * 100
+            double percentage = monthlyExpense.compareTo(BigDecimal.ZERO) > 0
+                    ? amount.divide(monthlyExpense, 4, RoundingMode.HALF_UP).doubleValue() * 100
                     : 0.0;
 
-            String displayName;
-            if (cardLast4 != null && !cardLast4.isBlank()) {
-                if (channel != null && channel.contains("CREDITO")) {
-                    displayName = "BCP Crédito **" + cardLast4;
-                } else if (channel != null && channel.contains("DEBITO")) {
-                    displayName = "BCP Débito **" + cardLast4;
-                } else if (channel != null && (channel.contains("TRANSFERENCIA") || channel.contains("AHORRO"))) {
-                    displayName = "BCP Cuenta **" + cardLast4;
-                } else {
-                    displayName = "BCP **" + cardLast4;
-                }
-            } else if (channel != null && channel.contains("YAPE")) {
-                displayName = "Yape";
-            } else if (channel != null) {
-                displayName = channel.replace("_", " ");
-            } else {
-                displayName = "Desconocido";
-            }
+            String displayName = ChannelType.formatDisplayName(channel, cardLast4);
 
-            breakdownList.add(com.store.api.model.dto.PeriodAnalyticsResponse.ChannelBreakdownDto.builder()
+            breakdownList.add(PeriodAnalyticsResponse.ChannelBreakdownDto.builder()
                     .channel(channel)
                     .cardLast4(cardLast4)
                     .displayName(displayName)
@@ -106,25 +140,25 @@ public class AnalyticsService {
         }
 
         if (!breakdownList.isEmpty()) {
-            com.store.api.model.dto.PeriodAnalyticsResponse.ChannelBreakdownDto first = breakdownList.getFirst();
+            PeriodAnalyticsResponse.ChannelBreakdownDto first = breakdownList.getFirst();
             topChannel = first.getDisplayName() != null ? first.getDisplayName() : first.getChannel();
             topChannelAmount = first.getAmount();
             topChannelPercentage = first.getPercentage();
         }
 
-        java.util.List<Object[]> rawMerchants = transactionRepository.findTopMerchants(startOfMonth, endOfMonth, userId);
-        java.util.List<com.store.api.model.dto.PeriodAnalyticsResponse.TopMerchantDto> topMerchantsList = new java.util.ArrayList<>();
+        List<Object[]> rawMerchants = transactionRepository.findTopMerchants(startOfMonth, visibleEnd, userId);
+        List<PeriodAnalyticsResponse.TopMerchantDto> topMerchantsList = new ArrayList<>();
 
         for (Object[] row : rawMerchants) {
             String merchantName = (String) row[0];
-            java.math.BigDecimal amount = (java.math.BigDecimal) row[1];
+            BigDecimal amount = (BigDecimal) row[1];
             long count = ((Number) row[2]).longValue();
 
-            double percentage = monthlyExpense.compareTo(java.math.BigDecimal.ZERO) > 0
-                    ? amount.divide(monthlyExpense, 4, java.math.RoundingMode.HALF_UP).doubleValue() * 100
+            double percentage = monthlyExpense.compareTo(BigDecimal.ZERO) > 0
+                    ? amount.divide(monthlyExpense, 4, RoundingMode.HALF_UP).doubleValue() * 100
                     : 0.0;
 
-            topMerchantsList.add(com.store.api.model.dto.PeriodAnalyticsResponse.TopMerchantDto.builder()
+            topMerchantsList.add(PeriodAnalyticsResponse.TopMerchantDto.builder()
                     .merchantName(merchantName)
                     .totalAmount(amount)
                     .transactionCount(count)
@@ -132,11 +166,14 @@ public class AnalyticsService {
                     .build());
         }
 
-        return com.store.api.model.dto.PeriodAnalyticsResponse.builder()
+        return PeriodAnalyticsResponse.builder()
                 .periodName(targetYearMonth.getMonth().name())
                 .monthlyExpense(monthlyExpense)
                 .monthlyIncome(monthlyIncome)
                 .internalTransfersAmount(internalTransfers)
+                .previousPeriodExpense(previousPeriodExpense)
+                .comparisonThroughDay(isCurrentMonth ? comparisonDays : null)
+                .dailyExpenses(dailyExpenses)
                 .totalMovements(totalMovements)
                 .lastExpenseMerchant(lastMerchant)
                 .lastExpenseAmount(lastAmount)

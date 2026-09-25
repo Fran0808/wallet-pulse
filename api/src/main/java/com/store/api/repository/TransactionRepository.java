@@ -53,6 +53,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
             @Param("userId") Long userId
     );
 
+    @Query("SELECT t.transactionDate, t.amount FROM Transaction t WHERE t.flowType = 'EXPENSE' AND t.transactionDate >= :start AND t.transactionDate <= :end AND (:userId IS NULL OR t.user.id = :userId) ORDER BY t.transactionDate")
+    List<Object[]> findExpenseAmountsByDateRange(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            @Param("userId") Long userId
+    );
+
     @Query("SELECT COUNT(t) FROM Transaction t WHERE (:userId IS NULL OR t.user.id = :userId)")
     long countByUserId(@Param("userId") Long userId);
 }

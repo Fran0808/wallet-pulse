@@ -14,6 +14,9 @@ public class PeriodAnalyticsResponse {
     private BigDecimal monthlyExpense;
     private BigDecimal monthlyIncome;
     private BigDecimal internalTransfersAmount;
+    private BigDecimal previousPeriodExpense;
+    private Integer comparisonThroughDay;
+    private List<DailyExpenseDto> dailyExpenses;
     private long totalMovements;
 
     private String lastExpenseMerchant;
@@ -27,6 +30,14 @@ public class PeriodAnalyticsResponse {
     private List<ChannelBreakdownDto> channelBreakdown;
 
     private List<TopMerchantDto> topMerchants;
+
+    @Data
+    @Builder
+    public static class DailyExpenseDto {
+        private int day;
+        private BigDecimal amount;
+        private BigDecimal cumulativeAmount;
+    }
 
     @Data
     @Builder

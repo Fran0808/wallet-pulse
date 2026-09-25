@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "google_oauth_tokens")
@@ -38,6 +39,12 @@ public class GoogleOAuthToken {
 
     @Column(name = "last_synced_internal_date")
     private Long lastSyncedInternalDate;
+
+    @Column(name = "last_successful_sync_at")
+    private Instant lastSuccessfulSyncAt;
+
+    @Column(name = "last_sync_failed")
+    private Boolean lastSyncFailed;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
