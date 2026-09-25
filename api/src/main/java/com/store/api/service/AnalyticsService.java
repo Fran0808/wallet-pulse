@@ -1,17 +1,5 @@
 package com.store.api.service;
 
-import com.store.api.config.security.UserContext;
-import com.store.api.model.dto.FinancialSummaryResponse;
-import com.store.api.model.dto.PeriodAnalyticsResponse;
-import com.store.api.model.entity.Transaction;
-import com.store.api.model.entity.User;
-import com.store.api.model.enums.ChannelType;
-import com.store.api.model.enums.FlowType;
-import com.store.api.repository.TransactionRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -22,6 +10,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.store.api.config.security.UserContext;
+import com.store.api.model.dto.FinancialSummaryResponse;
+import com.store.api.model.dto.PeriodAnalyticsResponse;
+import com.store.api.model.entity.Transaction;
+import com.store.api.model.entity.User;
+import com.store.api.model.enums.ChannelType;
+import com.store.api.model.enums.FlowType;
+import com.store.api.repository.TransactionRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -62,9 +64,9 @@ public class AnalyticsService {
         boolean isCurrentMonth = targetYearMonth.equals(YearMonth.from(now));
         boolean isFutureMonth = targetYearMonth.isAfter(YearMonth.from(now));
         int visibleDays = isFutureMonth ? 0 : isCurrentMonth ? now.getDayOfMonth() : targetYearMonth.lengthOfMonth();
-        LocalDateTime visibleEnd = isCurrentMonth
-                ? now.atTime(LocalTime.MAX)
-                : endOfMonth;
+        LocalDateTime visibleEnd = isFutureMonth
+                ? startOfMonth.minusNanos(1)
+                : isCurrentMonth ? now.atTime(LocalTime.MAX) : endOfMonth;
 
         YearMonth previousYearMonth = targetYearMonth.minusMonths(1);
         int comparisonDays = isCurrentMonth
