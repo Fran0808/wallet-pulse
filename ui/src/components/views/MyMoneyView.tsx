@@ -1,6 +1,7 @@
 import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight } from 'lucide-react';
 import type { PeriodAnalytics } from '../../types';
 import { formatCurrency, getChannelLabel } from '../../utils';
+import { ExpenseTrendChart } from '../charts/ExpenseTrendChart';
 
 interface MyMoneyViewProps {
   analytics: PeriodAnalytics | null;
@@ -39,6 +40,15 @@ export function MyMoneyView({ analytics, loading, selectedYear, selectedMonth }:
           <p className={`font-display font-num mt-4 text-3xl font-semibold tracking-tight ${net < 0 ? 'text-negative' : ''}`}>{loading ? 'S/ …' : formatCurrency(net)}</p>
           <p className="mt-2 text-sm text-muted">Entradas menos salidas registradas</p>
         </div>
+      </section>
+
+      <section className="surface p-6 sm:p-7" aria-labelledby="expense-trend-heading">
+        <div className="mb-6 border-b border-line pb-5">
+          <p className="eyebrow">Evolución</p>
+          <h2 id="expense-trend-heading" className="font-display mt-1 text-xl font-semibold">Gasto acumulado por día</h2>
+          <p className="mt-1 text-sm text-muted">Cómo avanzaron tus gastos registrados durante {period}.</p>
+        </div>
+        {loading ? <p className="py-12 text-sm text-muted" role="status">Calculando evolución...</p> : <ExpenseTrendChart points={analytics?.dailyExpenses ?? []} monthLabel={period} />}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">

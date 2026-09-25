@@ -57,7 +57,7 @@ export const HeaderPulse: React.FC<HeaderPulseProps> = ({ error }) => {
     try {
       setIsDisconnecting(true);
       await api.disconnectGoogle();
-      setGoogleAuth({ connected: false, email: null });
+      setGoogleAuth({ connected: false, email: null, lastSuccessfulSyncAt: null, lastSyncFailed: false });
       setNotification('Cuenta de Google desvinculada.');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Error al desvincular');

@@ -8,6 +8,7 @@ import { useAuth } from './contexts';
 import { useFinance } from './hooks';
 import type { Transaction } from './types';
 import { LogOut, Menu, X, Loader2 } from 'lucide-react';
+import { SyncStatus } from './components/layout/SyncStatus';
 
 const VIEW_LABELS: Record<NavView, string> = {
   inicio: 'Inicio',
@@ -25,13 +26,17 @@ export function App() {
     transactionsPage,
     loadingSummary,
     loadingTransactions,
+    syncStatus,
+    syncStatusUnavailable,
+    isSyncing,
+    triggerEmailSync,
     error,
     filters,
     selectedPeriod,
     setSelectedPeriod,
     handlePageChange,
     handleFilterChange,
-  } = useFinance();
+  } = useFinance(user?.id);
 
   const [activeView, setActiveView] = useState<NavView>('inicio');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -88,6 +93,7 @@ export function App() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3 sm:gap-5">
+              <SyncStatus status={syncStatus} unavailable={syncStatusUnavailable} syncing={isSyncing} onSync={() => { void triggerEmailSync().catch(() => {}); }} />
               <PeriodSelector
                 year={selectedPeriod.year}
                 month={selectedPeriod.month}

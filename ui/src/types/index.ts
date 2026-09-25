@@ -48,6 +48,9 @@ export interface PeriodAnalytics {
   monthlyExpense: number;
   monthlyIncome: number;
   internalTransfersAmount: number;
+  previousPeriodExpense: number | null;
+  comparisonThroughDay: number | null;
+  dailyExpenses: DailyExpense[];
   totalMovements: number;
   lastExpenseMerchant: string;
   lastExpenseAmount: number;
@@ -57,6 +60,12 @@ export interface PeriodAnalytics {
   topChannelPercentage: number;
   channelBreakdown: ChannelBreakdown[];
   topMerchants: TopMerchant[];
+}
+
+export interface DailyExpense {
+  day: number;
+  amount: number;
+  cumulativeAmount: number;
 }
 
 export interface PageResponse<T> {
@@ -91,6 +100,8 @@ export interface EmailConnectionStatus {
 export interface GoogleAuthStatus {
   connected: boolean;
   email: string | null;
+  lastSuccessfulSyncAt: string | null;
+  lastSyncFailed: boolean;
 }
 
 export interface UserProfile {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import type { TransactionFilterParams } from '../services/api';
-import type { FinancialSummary, PeriodAnalytics, Transaction, PageResponse, EmailSyncResponse } from '../types';
+import type { FinancialSummary, PeriodAnalytics, Transaction, PageResponse, EmailSyncResponse, GoogleAuthStatus } from '../types';
 
 function getPeriodDateRange(year: number, month: number) {
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -12,7 +12,7 @@ function getPeriodDateRange(year: number, month: number) {
   };
 }
 
-export function useFinance() {
+export function useFinance(userId?: number) {
   const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [periodAnalytics, setPeriodAnalytics] = useState<PeriodAnalytics | null>(null);
   const [transactionsPage, setTransactionsPage] = useState<PageResponse<Transaction> | null>(null);
@@ -20,6 +20,8 @@ export function useFinance() {
   const [loadingTransactions, setLoadingTransactions] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [syncResult, setSyncResult] = useState<EmailSyncResponse | null>(null);
+  const [syncStatus, setSyncStatus] = useState<GoogleAuthStatus | null>(null);
+  const [syncStatusUnavailable, setSyncStatusUnavailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [selectedPeriod, setSelectedPeriodState] = useState<{ year: number; month: number }>({
@@ -71,6 +73,21 @@ export function useFinance() {
     }
   }, [filters, selectedPeriod]);
 
+  const loadSyncStatus = useCallback(async () => {
+    if (!userId) {
+      setSyncStatus(null);
+      setSyncStatusUnavailable(false);
+      return;
+    }
+    try {
+      const status = await api.getGoogleAuthStatus();
+      setSyncStatus(status);
+      setSyncStatusUnavailable(false);
+    } catch {
+      setSyncStatusUnavailable(true);
+    }
+  }, [userId]);
+
   useEffect(() => {
     loadSummary();
   }, [loadSummary]);
@@ -80,16 +97,22 @@ export function useFinance() {
   }, [loadTransactions]);
 
   useEffect(() => {
+    setSyncStatus(null);
+    loadSyncStatus();
+  }, [loadSyncStatus]);
+
+  useEffect(() => {
     const interval = setInterval(() => {
       if (!isSyncing) {
         // Silent background polling: keeps data up to date without screen flickering
         loadSummary(true);
         loadTransactions(true);
+        if (userId) loadSyncStatus();
       }
     }, 45000);
 
     return () => clearInterval(interval);
-  }, [loadSummary, loadTransactions, isSyncing]);
+  }, [loadSummary, loadTransactions, loadSyncStatus, isSyncing, userId]);
 
   const triggerEmailSync = async () => {
     try {
@@ -104,6 +127,7 @@ export function useFinance() {
       setError(msg);
       throw err;
     } finally {
+      await loadSyncStatus();
       setIsSyncing(false);
     }
   };
@@ -124,6 +148,8 @@ export function useFinance() {
     loadingTransactions,
     isSyncing,
     syncResult,
+    syncStatus,
+    syncStatusUnavailable,
     error,
     filters,
     selectedPeriod,
